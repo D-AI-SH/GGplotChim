@@ -10,7 +10,7 @@ interface BlockNodeProps {
   onDelete: () => void;
   onMouseDown?: (e: React.MouseEvent) => void;
   onConnectionStart?: (blockId: string, type: 'input' | 'output') => void;
-  onConnectionEnd?: (type: 'input' | 'output') => void;
+  onConnectionEnd?: (blockId: string, type: 'input' | 'output') => void;
   isDragging?: boolean;
 }
 
@@ -29,6 +29,7 @@ const BlockNode: React.FC<BlockNodeProps> = ({
   
   const handleConnectionStart = (e: React.MouseEvent, type: 'input' | 'output') => {
     e.stopPropagation();
+    e.preventDefault();
     if (onConnectionStart) {
       onConnectionStart(block.id, type);
     }
@@ -36,8 +37,9 @@ const BlockNode: React.FC<BlockNodeProps> = ({
   
   const handleConnectionEnd = (e: React.MouseEvent, type: 'input' | 'output') => {
     e.stopPropagation();
+    e.preventDefault();
     if (onConnectionEnd) {
-      onConnectionEnd(type);
+      onConnectionEnd(block.id, type);
     }
   };
   
@@ -45,8 +47,6 @@ const BlockNode: React.FC<BlockNodeProps> = ({
     <div
       className={`block-node ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''}`}
       style={{
-        left: block.position.x,
-        top: block.position.y,
         borderLeftColor: definition.color
       }}
       onClick={onClick}

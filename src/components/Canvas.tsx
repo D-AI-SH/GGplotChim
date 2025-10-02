@@ -18,6 +18,7 @@ const Canvas: React.FC<CanvasProps> = ({ draggedBlock }) => {
   const [nearestBlock, setNearestBlock] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
   const [connectingFrom, setConnectingFrom] = useState<{ blockId: string; type: 'input' | 'output' } | null>(null);
+  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
   
   // 更新生成的代码
   useEffect(() => {
@@ -84,10 +85,15 @@ const Canvas: React.FC<CanvasProps> = ({ draggedBlock }) => {
     const block = blocks.find(b => b.id === blockId);
     if (!block) return;
     
+    const canvas = document.querySelector('.canvas-content') as HTMLElement;
+    if (!canvas) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    
     setDraggingBlockId(blockId);
     setDragOffset({
-      x: e.clientX - block.position.x,
-      y: e.clientY - block.position.y
+      x: e.clientX - rect.left - block.position.x,
+      y: e.clientY - rect.top - block.position.y
     });
     setSelectedBlock(blockId);
   }, [blocks, setSelectedBlock]);
@@ -136,23 +142,30 @@ const Canvas: React.FC<CanvasProps> = ({ draggedBlock }) => {
   
   // 开始连接
   const handleConnectionStart = useCallback((blockId: string, type: 'input' | 'output') => {
+    console.log('开始连接:', blockId, type);
     setConnectingFrom({ blockId, type });
   }, []);
   
   // 完成连接
   const handleConnectionEnd = useCallback((targetBlockId: string, targetType: 'input' | 'output') => {
-    if (!connectingFrom) return;
+    console.log('尝试完成连接:', targetBlockId, targetType, '来自:', connectingFrom);
+    if (!connectingFrom) {
+      console.log('没有正在进行的连接');
+      return;
+    }
     
     const sourceBlock = blocks.find(b => b.id === connectingFrom.blockId);
     const targetBlock = blocks.find(b => b.id === targetBlockId);
     
     if (!sourceBlock || !targetBlock || sourceBlock.id === targetBlock.id) {
+      console.log('连接无效：相同积木或积木不存在');
       setConnectingFrom(null);
       return;
     }
     
     // 只允许 output -> input 的连接
     if (connectingFrom.type === 'output' && targetType === 'input') {
+      console.log('连接类型匹配: output -> input');
       const { source, target } = connectBlocks(sourceBlock, targetBlock);
       updateBlock(source.id, source);
       updateBlock(target.id, target);
@@ -161,7 +174,9 @@ const Canvas: React.FC<CanvasProps> = ({ draggedBlock }) => {
       const rootBlockId = findRootBlock(blocks, source.id);
       const updatedBlocks = updateChainOrder(blocks, rootBlockId);
       updatedBlocks.forEach(b => updateBlock(b.id, b));
+      console.log('连接成功！');
     } else if (connectingFrom.type === 'input' && targetType === 'output') {
+      console.log('连接类型匹配: input -> output (反向)');
       const { source, target } = connectBlocks(targetBlock, sourceBlock);
       updateBlock(source.id, source);
       updateBlock(target.id, target);
@@ -170,6 +185,9 @@ const Canvas: React.FC<CanvasProps> = ({ draggedBlock }) => {
       const rootBlockId = findRootBlock(blocks, source.id);
       const updatedBlocks = updateChainOrder(blocks, rootBlockId);
       updatedBlocks.forEach(b => updateBlock(b.id, b));
+      console.log('连接成功！');
+    } else {
+      console.log('连接类型不匹配:', connectingFrom.type, '->', targetType);
     }
     
     setConnectingFrom(null);
@@ -187,6 +205,31 @@ const Canvas: React.FC<CanvasProps> = ({ draggedBlock }) => {
       };
     }
   }, [draggingBlockId, handleMouseMove, handleMouseUp]);
+  
+  // 追踪鼠标位置（用于连接预览）
+  useEffect(() => {
+    if (connectingFrom) {
+      const handleMouseMoveForConnection = (e: MouseEvent) => {
+        const canvas = document.querySelector('.canvas-content') as HTMLElement;
+        if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      };
+      
+      const handleMouseUpForConnection = () => {
+        setConnectingFrom(null);
+        setMousePos(null);
+      };
+      
+      window.addEventListener('mousemove', handleMouseMoveForConnection);
+      window.addEventListener('mouseup', handleMouseUpForConnection);
+      
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMoveForConnection);
+        window.removeEventListener('mouseup', handleMouseUpForConnection);
+      };
+    }
+  }, [connectingFrom]);
   
   const handleBlockDelete = useCallback((blockId: string) => {
     const blockToDelete = blocks.find(b => b.id === blockId);
@@ -236,10 +279,13 @@ const Canvas: React.FC<CanvasProps> = ({ draggedBlock }) => {
   
   // 绘制连接线
   const renderConnections = () => {
-    return blocks.map(block => {
-      return block.connections.outputs.map(outputId => {
+    const connections: JSX.Element[] = [];
+    
+    // 渲染现有连接
+    blocks.forEach(block => {
+      block.connections.outputs.forEach(outputId => {
         const targetBlock = blocks.find(b => b.id === outputId);
-        if (!targetBlock) return null;
+        if (!targetBlock) return;
         
         const definition = blockDefinitions.find(d => d.type === block.blockType);
         const color = definition?.color || '#666';
@@ -259,7 +305,7 @@ const Canvas: React.FC<CanvasProps> = ({ draggedBlock }) => {
         
         const pathD = `M ${startX} ${startY} C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${endX} ${endY}`;
         
-        return (
+        connections.push(
           <path
             key={`${block.id}-${outputId}`}
             d={pathD}
@@ -271,6 +317,47 @@ const Canvas: React.FC<CanvasProps> = ({ draggedBlock }) => {
         );
       });
     });
+    
+    // 添加连接预览线
+    if (connectingFrom && mousePos) {
+      const sourceBlock = blocks.find(b => b.id === connectingFrom.blockId);
+      if (sourceBlock) {
+        const definition = blockDefinitions.find(d => d.type === sourceBlock.blockType);
+        const color = definition?.color || '#4f46e5';
+        
+        // 根据连接类型确定起点
+        const startX = sourceBlock.position.x + 100;
+        const startY = connectingFrom.type === 'output' 
+          ? sourceBlock.position.y + 80 
+          : sourceBlock.position.y;
+        
+        const endX = mousePos.x;
+        const endY = mousePos.y;
+        
+        const controlOffset = Math.abs(endY - startY) * 0.5;
+        const cp1X = startX;
+        const cp1Y = startY + (connectingFrom.type === 'output' ? controlOffset : -controlOffset);
+        const cp2X = endX;
+        const cp2Y = endY + (connectingFrom.type === 'output' ? -controlOffset : controlOffset);
+        
+        const pathD = `M ${startX} ${startY} C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${endX} ${endY}`;
+        
+        connections.push(
+          <path
+            key="preview-connection"
+            d={pathD}
+            stroke={color}
+            strokeWidth="2"
+            strokeDasharray="5,5"
+            fill="none"
+            opacity="0.6"
+            className="connection-preview"
+          />
+        );
+      }
+    }
+    
+    return connections;
   };
   
   return (
@@ -303,15 +390,22 @@ const Canvas: React.FC<CanvasProps> = ({ draggedBlock }) => {
             {blocks.map(block => {
               const definition = blockDefinitions.find(d => d.type === block.blockType);
               return definition ? (
-                <div key={block.id} data-block-id={block.id}>
+                <div 
+                  key={block.id} 
+                  data-block-id={block.id}
+                  style={{
+                    left: `${block.position.x}px`,
+                    top: `${block.position.y}px`
+                  }}
+                >
                   <BlockNode
                     block={block}
                     definition={definition}
                     onClick={() => handleBlockClick(block.id)}
                     onDelete={() => handleBlockDelete(block.id)}
-                    onMouseDown={(e) => handleBlockMouseDown(e, block.id)}
+                    onMouseDown={(e: React.MouseEvent) => handleBlockMouseDown(e, block.id)}
                     onConnectionStart={handleConnectionStart}
-                    onConnectionEnd={(type) => handleConnectionEnd(block.id, type)}
+                    onConnectionEnd={handleConnectionEnd}
                     isDragging={draggingBlockId === block.id}
                   />
                 </div>
