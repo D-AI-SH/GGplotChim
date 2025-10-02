@@ -13,47 +13,60 @@ export enum BlockCategory {
 }
 
 export enum BlockType {
-  // 数据相关
+  // 1. 数据相关
   DATA_IMPORT = 'data_import',
-  DATA_FILTER = 'data_filter',
-  DATA_SELECT = 'data_select',
-  DATA_MUTATE = 'data_mutate',
-  
-  // ggplot 初始化
   GGPLOT_INIT = 'ggplot_init',
-  AES_MAPPING = 'aes_mapping',
   
-  // 几何对象
+  // 2. 美学映射
+  AES = 'aes',
+  
+  // 3. 几何对象 (Geoms)
   GEOM_POINT = 'geom_point',
   GEOM_LINE = 'geom_line',
   GEOM_BAR = 'geom_bar',
+  GEOM_COL = 'geom_col',
   GEOM_HISTOGRAM = 'geom_histogram',
   GEOM_BOXPLOT = 'geom_boxplot',
-  GEOM_VIOLIN = 'geom_violin',
   GEOM_SMOOTH = 'geom_smooth',
+  GEOM_TEXT = 'geom_text',
+  GEOM_AREA = 'geom_area',
   
-  // 标度
-  SCALE_COLOR = 'scale_color',
-  SCALE_FILL = 'scale_fill',
-  SCALE_X = 'scale_x',
-  SCALE_Y = 'scale_y',
+  // 4. 标度 (Scales)
+  SCALE_X_CONTINUOUS = 'scale_x_continuous',
+  SCALE_Y_CONTINUOUS = 'scale_y_continuous',
+  SCALE_COLOR_MANUAL = 'scale_color_manual',
+  SCALE_FILL_MANUAL = 'scale_fill_manual',
+  SCALE_COLOR_BREWER = 'scale_color_brewer',
+  SCALE_FILL_GRADIENT = 'scale_fill_gradient',
   
-  // 标签
+  // 5. 坐标系 (Coordinates)
+  COORD_FLIP = 'coord_flip',
+  COORD_CARTESIAN = 'coord_cartesian',
+  COORD_POLAR = 'coord_polar',
+  
+  // 6. 分面 (Facets)
+  FACET_WRAP = 'facet_wrap',
+  FACET_GRID = 'facet_grid',
+  
+  // 7. 统计变换 (Stats)
+  STAT_SUMMARY = 'stat_summary',
+  STAT_SMOOTH = 'stat_smooth',
+  
+  // 8. 标签 (Labels)
   LABS = 'labs',
+  GGTITLE = 'ggtitle',
+  XLAB = 'xlab',
+  YLAB = 'ylab',
   
-  // 主题
+  // 9. 主题 (Themes)
   THEME_MINIMAL = 'theme_minimal',
   THEME_CLASSIC = 'theme_classic',
   THEME_BW = 'theme_bw',
-  THEME_CUSTOM = 'theme_custom',
-  
-  // 坐标系
-  COORD_FLIP = 'coord_flip',
-  COORD_POLAR = 'coord_polar',
-  
-  // 分面
-  FACET_WRAP = 'facet_wrap',
-  FACET_GRID = 'facet_grid'
+  THEME_GRAY = 'theme_gray',
+  THEME_LIGHT = 'theme_light',
+  THEME_DARK = 'theme_dark',
+  THEME_VOID = 'theme_void',
+  THEME = 'theme'
 }
 
 export interface BlockParam {
