@@ -39,8 +39,8 @@ function getAllChains(blocks: BlockInstance[]): BlockInstance[][] {
       chain.push(current);
       visited.add(current.id);
       
-      // 获取第一个输出连接
-      const nextId: string | undefined = current.connections.outputs[0];
+      // 获取输出连接（现在只有一个输出）
+      const nextId: string | null = current.connections.output;
       current = nextId ? blocks.find(b => b.id === nextId) : undefined;
     }
     

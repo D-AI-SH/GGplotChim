@@ -17,12 +17,19 @@ interface BlockStore {
   // 选中的积木
   selectedBlockId: string | null;
   
+  // 多选的积木ID列表
+  selectedBlockIds: string[];
+  
   // Actions
   addBlock: (block: BlockInstance) => void;
   removeBlock: (blockId: string) => void;
   updateBlock: (blockId: string, updates: Partial<BlockInstance>) => void;
+  updateBlocks: (blocks: BlockInstance[]) => void;
   updateBlockParams: (blockId: string, params: Record<string, any>) => void;
   setSelectedBlock: (blockId: string | null) => void;
+  setSelectedBlocks: (blockIds: string[]) => void;
+  toggleBlockSelection: (blockId: string) => void;
+  clearSelection: () => void;
   setDataset: (dataset: Dataset | null) => void;
   setGeneratedCode: (code: string) => void;
   setPlotUrl: (url: string | null) => void;
@@ -35,13 +42,15 @@ export const useBlockStore = create<BlockStore>((set) => ({
   generatedCode: '',
   plotUrl: null,
   selectedBlockId: null,
+  selectedBlockIds: [],
   
   addBlock: (block) => set((state) => ({
     blocks: [...state.blocks, block]
   })),
   
   removeBlock: (blockId) => set((state) => ({
-    blocks: state.blocks.filter(b => b.id !== blockId)
+    blocks: state.blocks.filter(b => b.id !== blockId),
+    selectedBlockIds: state.selectedBlockIds.filter(id => id !== blockId)
   })),
   
   updateBlock: (blockId, updates) => set((state) => ({
@@ -50,13 +59,39 @@ export const useBlockStore = create<BlockStore>((set) => ({
     )
   })),
   
+  updateBlocks: (blocks) => set({ blocks }),
+  
   updateBlockParams: (blockId, params) => set((state) => ({
     blocks: state.blocks.map(b =>
       b.id === blockId ? { ...b, params: { ...b.params, ...params } } : b
     )
   })),
   
-  setSelectedBlock: (blockId) => set({ selectedBlockId: blockId }),
+  setSelectedBlock: (blockId) => set({ 
+    selectedBlockId: blockId,
+    selectedBlockIds: blockId ? [blockId] : []
+  }),
+  
+  setSelectedBlocks: (blockIds) => set({ 
+    selectedBlockIds: blockIds,
+    selectedBlockId: blockIds.length === 1 ? blockIds[0] : null
+  }),
+  
+  toggleBlockSelection: (blockId) => set((state) => {
+    const isSelected = state.selectedBlockIds.includes(blockId);
+    const newSelectedIds = isSelected
+      ? state.selectedBlockIds.filter(id => id !== blockId)
+      : [...state.selectedBlockIds, blockId];
+    return {
+      selectedBlockIds: newSelectedIds,
+      selectedBlockId: newSelectedIds.length === 1 ? newSelectedIds[0] : null
+    };
+  }),
+  
+  clearSelection: () => set({ 
+    selectedBlockIds: [],
+    selectedBlockId: null
+  }),
   
   setDataset: (dataset) => set({ currentDataset: dataset }),
   
@@ -69,7 +104,8 @@ export const useBlockStore = create<BlockStore>((set) => ({
     currentDataset: null,
     generatedCode: '',
     plotUrl: null,
-    selectedBlockId: null
+    selectedBlockId: null,
+    selectedBlockIds: []
   })
 }));
 

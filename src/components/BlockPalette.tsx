@@ -3,6 +3,7 @@ import { BlockCategory, BlockDefinition } from '../types/blocks';
 import { blocksByCategory } from '../data/blockDefinitions';
 
 const categoryLabels: Record<BlockCategory, string> = {
+  [BlockCategory.BASE]: '⚙️ 基础语句',
   [BlockCategory.DATA]: '📊 数据',
   [BlockCategory.GEOM]: '📈 几何对象',
   [BlockCategory.AES]: '🎨 美学映射',
@@ -15,11 +16,11 @@ const categoryLabels: Record<BlockCategory, string> = {
 };
 
 interface BlockPaletteProps {
-  onBlockDragStart: (block: BlockDefinition) => void;
+  onBlockDragStart: (block: BlockDefinition, e: React.MouseEvent) => void;
 }
 
 const BlockPalette: React.FC<BlockPaletteProps> = ({ onBlockDragStart }) => {
-  const [activeCategory, setActiveCategory] = useState<BlockCategory>(BlockCategory.DATA);
+  const [activeCategory, setActiveCategory] = useState<BlockCategory>(BlockCategory.BASE);
   
   const categories = Object.keys(blocksByCategory) as BlockCategory[];
   const currentBlocks = blocksByCategory[activeCategory] || [];
@@ -47,9 +48,11 @@ const BlockPalette: React.FC<BlockPaletteProps> = ({ onBlockDragStart }) => {
           <div
             key={block.id}
             className="block-item"
-            draggable
-            onDragStart={() => onBlockDragStart(block)}
-            style={{ borderLeftColor: block.color }}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              onBlockDragStart(block, e);
+            }}
+            style={{ borderLeftColor: block.color, cursor: 'grab' }}
           >
             <div className="block-header">
               <span className="block-label">{block.label}</span>

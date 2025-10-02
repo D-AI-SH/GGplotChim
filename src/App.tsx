@@ -7,11 +7,14 @@ import { useBlockStore } from './store/useBlockStore';
 import { Trash2, Download, Upload } from 'lucide-react';
 
 const App: React.FC = () => {
-  const [draggedBlock, setDraggedBlock] = useState<BlockDefinition | null>(null);
+  const canvasRef = React.useRef<any>(null);
   const { clearAll } = useBlockStore();
   
-  const handleBlockDragStart = (block: BlockDefinition) => {
-    setDraggedBlock(block);
+  const handleBlockDragStart = (block: BlockDefinition, e: React.MouseEvent) => {
+    // 将拖拽事件传递给Canvas处理
+    if (canvasRef.current && canvasRef.current.handleBlockDragStart) {
+      canvasRef.current.handleBlockDragStart(block, e);
+    }
   };
   
   const handleClearAll = () => {
@@ -63,7 +66,7 @@ const App: React.FC = () => {
         </div>
         
         <div className="main-center">
-          <Canvas draggedBlock={draggedBlock} />
+          <Canvas ref={canvasRef} />
         </div>
         
         <div className="main-right">

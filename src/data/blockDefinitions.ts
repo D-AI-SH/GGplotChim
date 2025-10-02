@@ -2,6 +2,172 @@ import { BlockDefinition, BlockType, BlockCategory } from '../types/blocks';
 
 // 积木定义库 - 按照 ggplot2 图层语法组织
 export const blockDefinitions: BlockDefinition[] = [
+  // ========== 0. R语言基础语句 (Base) ==========
+  {
+    id: 'library',
+    type: BlockType.LIBRARY,
+    category: BlockCategory.BASE,
+    label: 'library()',
+    description: '加载R包',
+    color: '#ef4444',
+    params: [
+      {
+        name: 'package',
+        type: 'text',
+        label: '包名',
+        defaultValue: 'ggplot2',
+        required: true
+      }
+    ],
+    rTemplate: 'library({{package}})'
+  },
+  
+  {
+    id: 'print',
+    type: BlockType.PRINT,
+    category: BlockCategory.BASE,
+    label: 'print()',
+    description: '打印输出',
+    color: '#ef4444',
+    params: [
+      {
+        name: 'value',
+        type: 'text',
+        label: '值',
+        required: true
+      }
+    ],
+    rTemplate: 'print({{value}})'
+  },
+  
+  {
+    id: 'assign',
+    type: BlockType.ASSIGN,
+    category: BlockCategory.BASE,
+    label: '<- 赋值',
+    description: '变量赋值',
+    color: '#ef4444',
+    params: [
+      {
+        name: 'variable',
+        type: 'text',
+        label: '变量名',
+        required: true
+      },
+      {
+        name: 'value',
+        type: 'text',
+        label: '值',
+        required: true
+      }
+    ],
+    rTemplate: '{{variable}} <- {{value}}'
+  },
+  
+  {
+    id: 'for_loop',
+    type: BlockType.FOR_LOOP,
+    category: BlockCategory.BASE,
+    label: 'for循环',
+    description: 'for循环语句',
+    color: '#ef4444',
+    params: [
+      {
+        name: 'var',
+        type: 'text',
+        label: '变量',
+        defaultValue: 'i',
+        required: true
+      },
+      {
+        name: 'range',
+        type: 'text',
+        label: '范围',
+        defaultValue: '1:10',
+        required: true
+      },
+      {
+        name: 'body',
+        type: 'text',
+        label: '循环体',
+        required: false
+      }
+    ],
+    rTemplate: 'for ({{var}} in {{range}}) {{{#if body}}\n  {{body}}\n{{/if}}}'
+  },
+  
+  {
+    id: 'if_statement',
+    type: BlockType.IF_STATEMENT,
+    category: BlockCategory.BASE,
+    label: 'if语句',
+    description: '条件判断语句',
+    color: '#ef4444',
+    params: [
+      {
+        name: 'condition',
+        type: 'text',
+        label: '条件',
+        required: true
+      },
+      {
+        name: 'then_body',
+        type: 'text',
+        label: 'then语句',
+        required: false
+      },
+      {
+        name: 'else_body',
+        type: 'text',
+        label: 'else语句',
+        required: false
+      }
+    ],
+    rTemplate: 'if ({{condition}}) {{{#if then_body}}\n  {{then_body}}\n{{/if}}}{{#if else_body}} else {\n  {{else_body}}\n}{{/if}}'
+  },
+  
+  {
+    id: 'function_call',
+    type: BlockType.FUNCTION_CALL,
+    category: BlockCategory.BASE,
+    label: '函数调用',
+    description: '调用R函数',
+    color: '#ef4444',
+    params: [
+      {
+        name: 'function_name',
+        type: 'text',
+        label: '函数名',
+        required: true
+      },
+      {
+        name: 'args',
+        type: 'text',
+        label: '参数',
+        required: false
+      }
+    ],
+    rTemplate: '{{function_name}}({{#if args}}{{args}}{{/if}})'
+  },
+  
+  {
+    id: 'comment',
+    type: BlockType.COMMENT,
+    category: BlockCategory.BASE,
+    label: '# 注释',
+    description: '代码注释',
+    color: '#ef4444',
+    params: [
+      {
+        name: 'text',
+        type: 'text',
+        label: '注释内容',
+        required: true
+      }
+    ],
+    rTemplate: '# {{text}}'
+  },
+  
   // ========== 1. 数据层 (Data) ==========
   {
     id: 'data_import',

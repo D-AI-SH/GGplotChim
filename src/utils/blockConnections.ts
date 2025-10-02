@@ -9,12 +9,12 @@ export const connectBlocks = (
   sourceBlock: BlockInstance,
   targetBlock: BlockInstance
 ): { source: BlockInstance; target: BlockInstance } => {
-  // 更新源积木的输出连接
+  // 更新源积木的输出连接（只能有一个输出）
   const updatedSource: BlockInstance = {
     ...sourceBlock,
     connections: {
       ...sourceBlock.connections,
-      outputs: [...sourceBlock.connections.outputs, targetBlock.id]
+      output: targetBlock.id
     }
   };
 
@@ -40,12 +40,12 @@ export const disconnectBlocks = (
   sourceBlock: BlockInstance,
   targetBlock: BlockInstance
 ): { source: BlockInstance; target: BlockInstance } => {
-  // 从源积木的输出列表中移除目标积木
+  // 清除源积木的输出连接
   const updatedSource: BlockInstance = {
     ...sourceBlock,
     connections: {
       ...sourceBlock.connections,
-      outputs: sourceBlock.connections.outputs.filter(id => id !== targetBlock.id)
+      output: null
     }
   };
 
@@ -79,8 +79,8 @@ export const getBlockChain = (
   while (currentBlock) {
     chain.push(currentBlock);
     
-    // 获取第一个输出连接（假设每个积木只有一个主输出）
-    const nextBlockId = currentBlock.connections.outputs[0];
+    // 获取输出连接（现在只有一个输出）
+    const nextBlockId = currentBlock.connections.output;
     currentBlock = nextBlockId ? blockMap.get(nextBlockId) : undefined;
   }
   
@@ -97,6 +97,26 @@ export const getAllChains = (blocks: BlockInstance[]): BlockInstance[][] => {
   
   // 为每个起始积木构建链
   return startBlocks.map(startBlock => getBlockChain(blocks, startBlock.id));
+};
+
+/**
+ * 查找链的根节点（没有输入连接的第一个积木）
+ * @param blocks 所有积木
+ * @param blockId 起始积木 ID
+ */
+export const findRootBlock = (
+  blocks: BlockInstance[],
+  blockId: string
+): string => {
+  const blockMap = new Map(blocks.map(b => [b.id, b]));
+  let currentBlock = blockMap.get(blockId);
+  
+  // 向上遍历直到找到没有输入连接的积木
+  while (currentBlock && currentBlock.connections.input) {
+    currentBlock = blockMap.get(currentBlock.connections.input);
+  }
+  
+  return currentBlock?.id || blockId;
 };
 
 /**
@@ -124,7 +144,7 @@ export const updateChainOrder = (
     }
     
     order++;
-    const nextBlockId = currentBlock.connections.outputs[0];
+    const nextBlockId = currentBlock.connections.output;
     currentBlock = nextBlockId ? blockMap.get(nextBlockId) : undefined;
   }
   

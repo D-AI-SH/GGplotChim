@@ -6,12 +6,13 @@ import { X, Circle } from 'lucide-react';
 interface BlockNodeProps {
   block: BlockInstance;
   definition: BlockDefinition;
-  onClick: () => void;
+  onClick: (e: React.MouseEvent) => void;
   onDelete: () => void;
   onMouseDown?: (e: React.MouseEvent) => void;
   onConnectionStart?: (blockId: string, type: 'input' | 'output') => void;
   onConnectionEnd?: (blockId: string, type: 'input' | 'output') => void;
   isDragging?: boolean;
+  isSelected?: boolean;
 }
 
 const BlockNode: React.FC<BlockNodeProps> = ({ 
@@ -22,10 +23,9 @@ const BlockNode: React.FC<BlockNodeProps> = ({
   onMouseDown,
   onConnectionStart,
   onConnectionEnd,
-  isDragging = false
+  isDragging = false,
+  isSelected = false
 }) => {
-  const { selectedBlockId } = useBlockStore();
-  const isSelected = selectedBlockId === block.id;
   
   const handleConnectionStart = (e: React.MouseEvent, type: 'input' | 'output') => {
     e.stopPropagation();
@@ -47,7 +47,8 @@ const BlockNode: React.FC<BlockNodeProps> = ({
     <div
       className={`block-node ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''}`}
       style={{
-        borderLeftColor: definition.color
+        borderLeftColor: definition.color,
+        boxShadow: isSelected ? '0 0 0 3px rgba(79, 70, 229, 0.5)' : undefined
       }}
       onClick={onClick}
       onMouseDown={onMouseDown}
@@ -99,7 +100,7 @@ const BlockNode: React.FC<BlockNodeProps> = ({
         onMouseUp={(e) => handleConnectionEnd(e, 'output')}
         title="输出连接点 - 连接到下一个积木"
       >
-        <Circle size={12} fill={block.connections.outputs.length > 0 ? definition.color : 'white'} />
+        <Circle size={12} fill={block.connections.output ? definition.color : 'white'} />
       </div>
       
       {/* 顺序标记 */}

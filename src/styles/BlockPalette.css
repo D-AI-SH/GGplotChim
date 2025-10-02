@@ -1,0 +1,93 @@
+/* ========== 积木面板样式 ========== */
+.block-palette {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.palette-header {
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.palette-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* ========== 分类标签 ========== */
+.category-tabs {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+  gap: 0.25rem;
+  border-bottom: 1px solid #e5e7eb;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.category-tab {
+  padding: 0.6rem 0.8rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  color: #4b5563;
+}
+
+.category-tab:hover {
+  background: #f3f4f6;
+}
+
+.category-tab.active {
+  background: #e0e7ff;
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+/* ========== 积木列表 ========== */
+.blocks-list {
+  flex: 1;
+  padding: 0.5rem;
+  overflow-y: auto;
+}
+
+.block-item {
+  padding: 0.8rem;
+  margin-bottom: 0.5rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #3b82f6;
+  border-radius: 6px;
+  cursor: grab;
+  transition: all 0.2s;
+}
+
+.block-item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.block-item:active {
+  cursor: grabbing;
+}
+
+.block-header {
+  margin-bottom: 0.3rem;
+}
+
+.block-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #1f2937;
+}
+
+.block-description {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+

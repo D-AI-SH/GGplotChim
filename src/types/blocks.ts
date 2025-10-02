@@ -1,6 +1,7 @@
 // 积木类型定义
 
 export enum BlockCategory {
+  BASE = 'base',     // R语言基础语句
   DATA = 'data',
   GEOM = 'geom',
   AES = 'aes',
@@ -13,6 +14,15 @@ export enum BlockCategory {
 }
 
 export enum BlockType {
+  // 0. R语言基础语句
+  LIBRARY = 'library',
+  PRINT = 'print',
+  ASSIGN = 'assign',
+  FOR_LOOP = 'for_loop',
+  IF_STATEMENT = 'if_statement',
+  FUNCTION_CALL = 'function_call',
+  COMMENT = 'comment',
+  
   // 1. 数据相关
   DATA_IMPORT = 'data_import',
   GGPLOT_INIT = 'ggplot_init',
@@ -97,9 +107,10 @@ export interface BlockInstance {
   params: Record<string, any>;
   connections: {
     input: string | null;  // 输入连接的积木 ID（上一个积木）
-    outputs: string[];     // 输出连接的积木 ID 列表（下一个积木们）
+    output: string | null; // 输出连接的积木 ID（只能连接一个积木，串行）
   };
   order: number; // 在图层链中的顺序（0 为起始积木）
+  isSelected?: boolean; // 是否被选中（用于多选）
 }
 
 export interface DataColumn {

@@ -1,0 +1,150 @@
+/* ========== 画布样式 ========== */
+.canvas {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.canvas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.canvas-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.canvas-info {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.canvas-content {
+  flex: 1;
+  position: relative;
+  overflow: auto;
+}
+
+.canvas-blocks {
+  position: relative;
+  min-height: 100%;
+  padding: 1rem;
+}
+
+/* ========== 画布提示 ========== */
+.canvas-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #9ca3af;
+  font-size: 1rem;
+  gap: 0.5rem;
+}
+
+.canvas-tip {
+  font-size: 0.9rem;
+  color: #6b7280;
+  background: #fef3c7;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #fde047;
+}
+
+/* ========== 连接线层 ========== */
+.connection-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.connection-line {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.connection-line:hover {
+  opacity: 1;
+  stroke-width: 3;
+}
+
+/* ========== 吸附预览效果 ========== */
+/* 吸附预览线 */
+.snap-preview-line {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: snap-pulse 1s ease-in-out infinite;
+}
+
+/* 连接预览线 */
+.connection-preview {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 吸附目标高亮 - 在两个连接点之间滑动 */
+.snap-target-highlight {
+  animation: snap-slide 2s ease-in-out infinite;
+}
+
+@keyframes snap-pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* 在连接线上滑动的动画 */
+@keyframes snap-slide {
+  0% {
+    offset-distance: 0%;
+    opacity: 0.4;
+    r: 8;
+  }
+  50% {
+    offset-distance: 100%;
+    opacity: 1;
+    r: 12;
+  }
+  100% {
+    offset-distance: 0%;
+    opacity: 0.4;
+    r: 8;
+  }
+}
+
+/* ========== 框选样式 ========== */
+.selection-box {
+  position: absolute;
+  border: 2px dashed #4f46e5;
+  background-color: rgba(79, 70, 229, 0.1);
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* ========== 积木容器 ========== */
+.block-container {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.block-container > * {
+  pointer-events: all;
+}
+
