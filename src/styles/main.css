@@ -260,15 +260,6 @@ body {
   overflow: auto;
 }
 
-.canvas-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #9ca3af;
-  font-size: 1rem;
-}
-
 .canvas-blocks {
   position: relative;
   min-height: 100%;
@@ -276,17 +267,29 @@ body {
 }
 
 /* ========== 积木节点 ========== */
-.block-node {
+[data-block-id] {
   position: absolute;
+  pointer-events: none;
+}
+
+[data-block-id] > * {
+  pointer-events: all;
+}
+
+.block-node {
+  position: relative;
   min-width: 220px;
   padding: 0.8rem;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
   background: white;
   border: 2px solid #e5e7eb;
   border-left: 5px solid #3b82f6;
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  cursor: pointer;
-  transition: all 0.2s;
+  cursor: move;
+  transition: box-shadow 0.2s;
+  user-select: none;
 }
 
 .block-node:hover {
@@ -297,6 +300,14 @@ body {
 .block-node.selected {
   border-color: #4f46e5;
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+.block-node.dragging {
+  opacity: 0.8;
+  cursor: grabbing;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+  transform: none !important;
 }
 
 .block-node-header {
@@ -347,6 +358,115 @@ body {
 .param-value {
   color: #1f2937;
   font-weight: 600;
+}
+
+/* ========== 连接点 ========== */
+.connection-point {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.connection-point:hover {
+  transform: translateX(-50%) scale(1.3);
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.3);
+}
+
+.connection-point:active {
+  transform: translateX(-50%) scale(1.15);
+  background: #4f46e5;
+}
+
+.connection-input {
+  top: -12px;
+}
+
+.connection-output {
+  bottom: -12px;
+}
+
+.connection-point svg {
+  stroke: #6b7280;
+  stroke-width: 1.5;
+}
+
+.connection-point:hover svg {
+  stroke: #4f46e5;
+}
+
+/* ========== 顺序标记 ========== */
+.block-order-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 5;
+}
+
+/* ========== 连接线层 ========== */
+.connection-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.connection-line {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.connection-line:hover {
+  opacity: 1;
+  stroke-width: 3;
+}
+
+/* ========== 画布提示 ========== */
+.canvas-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #9ca3af;
+  font-size: 1rem;
+  gap: 0.5rem;
+}
+
+.canvas-tip {
+  font-size: 0.9rem;
+  color: #6b7280;
+  background: #fef3c7;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #fde047;
 }
 
 /* ========== 预览面板 ========== */

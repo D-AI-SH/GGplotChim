@@ -95,10 +95,11 @@ export interface BlockInstance {
   blockType: BlockType;
   position: { x: number; y: number };
   params: Record<string, any>;
-  connections?: {
-    input?: string; // 输入连接的块 ID
-    output?: string[]; // 输出连接的块 ID
+  connections: {
+    input: string | null;  // 输入连接的积木 ID（上一个积木）
+    outputs: string[];     // 输出连接的积木 ID 列表（下一个积木们）
   };
+  order: number; // 在图层链中的顺序（0 为起始积木）
 }
 
 export interface DataColumn {
