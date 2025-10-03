@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>测试圆形堆叠条形图代码解析</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .block { 
+      margin: 10px 0; 
+      padding: 10px; 
+      border-left: 4px solid #3b82f6;
+      background: #f0f9ff;
+    }
+    .block-type { font-weight: bold; color: #1e40af; }
+    .params { margin-top: 5px; font-size: 0.9em; color: #64748b; }
+    .error { border-left-color: #ef4444; background: #fef2f2; }
+  </style>
+</head>
+<body>
+  <h1>解析结果</h1>
+  <div id="output"></div>
+  
+  <script type="module">
+    // 模拟 parseCodeLine 函数
+    function parseCodeLine(line) {
+      const trimmed = line.trim();
+      
+      if (!trimmed || trimmed.startsWith('#')) {
+        return null;
+      }
+      
+      // 解析赋值语句
+      if (trimmed.includes('<-')) {
+        const parts = trimmed.split('<-').map(p => p.trim());
+        if (parts.length === 2) {
+          const varName = parts[0];
+          const value = parts[1];
+          
+          if (varName === 'data') {
+            return {
+              blockType: 'DATA_IMPORT',
+              params: { source: value },
+              original: trimmed
+            };
+          }
+          
+          return {
+            blockType: 'ASSIGN',
+            params: { variable: varName, value: value },
+            original: trimmed
+          };
+        }
+      }
+      
+      return {
+        blockType: 'OTHER',
+        original: trimmed
+      };
+    }
+    
+    // 测试代码（部分行）
+    const testLines = [
+      'empty_bar <- 2',
+      'nObsType <- nlevels(as.factor(data$observation))',
+      'to_add <- data.frame( matrix(NA, empty_bar*nlevels(data$group)*nObsType, ncol(data)) )',
+      'data <- data %>% gather(key = "observation", value="value", -c(1,2))',
+      'angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar',
+      'label_data$hjust <- ifelse( angle < -90, 1, 0)',
+      'p <- ggplot(data) +'
+    ];
+    
+    const output = document.getElementById('output');
+    testLines.forEach((line, index) => {
+      const result = parseCodeLine(line);
+      if (result) {
+        const div = document.createElement('div');
+        div.className = 'block';
+        div.innerHTML = `
+          <div class="block-type">第${index + 1}行: ${result.blockType}</div>
+          <div style="margin: 5px 0;"><code>${result.original}</code></div>
+          <div class="params">${JSON.stringify(result.params || {}, null, 2)}</div>
+        `;
+        output.appendChild(div);
+      }
+    });
+  </script>
+</body>
+</html>
+

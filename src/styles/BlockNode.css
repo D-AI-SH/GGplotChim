@@ -159,20 +159,20 @@
 
 /* ========== 容器型积木（C型）的样式 ========== */
 .block-slots {
-  margin-top: 8px;
-  margin-bottom: 8px;
+  margin-top: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
 }
 
 .block-slot {
-  margin: 6px 0;
+  margin: var(--spacing-md) 0;  /* 增加插槽之间的间距 */
 }
 
 .slot-label {
   font-size: 11px;
   font-weight: var(--font-semibold);
   color: var(--color-gray-500);
-  margin-bottom: 4px;
-  padding: 0 8px;
+  margin-bottom: var(--spacing-sm);
+  padding: 0 var(--spacing-sm);
 }
 
 .slot-drop-zone {
@@ -180,8 +180,8 @@
   background: rgba(243, 244, 246, 0.8);
   border: var(--border-width-thick) dashed var(--border-color-light);
   border-radius: var(--radius-md);
-  padding: 8px;
-  margin: 0 8px;
+  padding: var(--spacing-md);  /* 增加插槽内的padding */
+  margin: 0 var(--spacing-sm);
   transition: var(--transition-all) ease;
   /* 确保插槽内容可见，不使用 max-height 和 overflow: hidden */
   /* 如果内容太多，整个容器会变高，而不是隐藏内容 */
@@ -206,13 +206,13 @@
 .slot-children {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--spacing-md);  /* 增加积木之间的间距 */
   /* 不设置 max-height 和 overflow，确保所有子元素都可见 */
   /* 这样连接线才能正确计算位置 */
 }
 
 .slot-children .block-node {
-  margin: 0;
+  margin: var(--spacing-xs) 0;  /* 添加上下间距 */
   width: 100%;
 }
 

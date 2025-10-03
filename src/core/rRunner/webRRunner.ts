@@ -34,39 +34,95 @@ class WebRRunner {
   }
 
   private async _doInitialize(): Promise<void> {
-    console.log('🚀 正在初始化 WebR...');
+    console.log('🚀 [步骤 1/4] 正在初始化 WebR...');
+    this.updateInitProgress('[1/4] 准备初始化 WebR...');
     
     try {
+      // 步骤 1: 创建 WebR 实例
+      console.log('📦 创建 WebR 实例（使用 Channel 模式，无需 Service Worker）');
       this.webR = new WebR({
         baseUrl: 'https://webr.r-wasm.org/latest/',
-        serviceWorkerUrl: '',
+        // 使用 Channel 模式而不是 Service Worker 模式
+        // 这样更简单，不需要额外的 worker 配置
       });
 
+      // 步骤 2: 初始化 WebR
+      console.log('⏳ [步骤 2/4] 正在下载和初始化 WebR 运行时...');
+      this.updateInitProgress('[2/4] 正在下载 WebR 运行时（约 10MB）...');
+      
       await this.webR.init();
       this.isInitialized = true;
       
-      console.log('✅ WebR 初始化成功！');
+      console.log('✅ [步骤 2/4] WebR 核心初始化成功！');
       
-      // 安装 ggplot2 包 - 使用 webr::install() 方法
-      console.log('📦 正在安装 ggplot2...');
+      // 步骤 3: 安装 ggplot2 包
+      console.log('📦 [步骤 3/4] 正在安装 ggplot2 包...');
+      this.updateInitProgress('[3/4] 正在安装 ggplot2 包（约 10-20MB）...');
+      
       try {
         // WebR 有预编译的二进制包，使用 webr::install() 而不是 install.packages()
         await this.webR.installPackages(['ggplot2']);
-        console.log('✅ ggplot2 安装成功！');
+        console.log('✅ [步骤 3/4] ggplot2 安装成功！');
         
-        // 验证安装
+        // 步骤 4: 验证安装
+        console.log('🔍 [步骤 4/4] 验证 ggplot2 安装...');
+        this.updateInitProgress('[4/4] 正在验证 ggplot2 安装...');
+        
         await this.webR.evalR('library(ggplot2)');
-        console.log('✅ ggplot2 加载验证成功');
+        console.log('✅ [步骤 4/4] ggplot2 加载验证成功');
       
       } catch (pkgError) {
         console.warn('⚠️ ggplot2 安装失败，将在首次使用时尝试安装:', pkgError);
+        this.updateInitProgress('[3/4] ggplot2 安装失败，但可以继续使用');
         // 不阻止初始化，允许后续按需安装
       }
       
+      // 更新全局状态 - WebR 已完全就绪
+      console.log('🎉 ========================================');
+      console.log('🎉 WebR 环境完全就绪！可以开始使用了！');
+      console.log('🎉 ========================================');
+      this.updateInitProgress('✅ 初始化完成！');
+      this.updateStoreReadyState();
+      
     } catch (error) {
       console.error('❌ WebR 初始化失败:', error);
+      console.error('   错误详情:', error);
       this.isInitialized = false;
+      
+      this.updateInitProgress('❌ 初始化失败，请刷新页面重试');
+      
+      // 即使失败也更新状态，让用户看到界面
+      this.updateStoreReadyState();
+      
       throw new Error(`WebR 初始化失败: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * 更新初始化进度
+   */
+  private updateInitProgress(progress: string): void {
+    try {
+      const { useBlockStore } = require('../../store/useBlockStore');
+      const { setWebRInitProgress } = useBlockStore.getState();
+      setWebRInitProgress(progress);
+    } catch (error) {
+      console.warn('⚠️ 无法更新初始化进度:', error);
+    }
+  }
+
+  /**
+   * 更新 Store 中的 WebR 就绪状态
+   */
+  private updateStoreReadyState(): void {
+    try {
+      // 动态导入 store 以避免循环依赖
+      const { useBlockStore } = require('../../store/useBlockStore');
+      const { setIsWebRReady } = useBlockStore.getState();
+      setIsWebRReady(true);
+      console.log('✅ Store 状态已更新：WebR 就绪');
+    } catch (error) {
+      console.warn('⚠️ 无法更新 Store 状态:', error);
     }
   }
 
@@ -205,6 +261,13 @@ paste(svg_content, collapse = "\\n")
    */
   isReady(): boolean {
     return this.isInitialized;
+  }
+
+  /**
+   * 获取 WebR 实例（用于高级用法，如AST解析）
+   */
+  getWebR(): WebR | null {
+    return this.webR;
   }
 
   /**

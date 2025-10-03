@@ -1,14 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import BlockPalette from './components/BlockPalette';
 import Canvas from './components/Canvas';
 import PreviewPanel from './components/PreviewPanel';
 import { BlockDefinition } from './types/blocks';
 import { useBlockStore } from './store/useBlockStore';
 import { Trash2, Download, Upload } from 'lucide-react';
+import { webRRunner } from './core/rRunner/webRRunner';
 
 const App: React.FC = () => {
   const canvasRef = React.useRef<any>(null);
-  const { clearAll } = useBlockStore();
+  const { clearAll, isWebRReady, webRInitProgress } = useBlockStore();
+  
+  // 在应用启动时立即初始化 WebR
+  useEffect(() => {
+    const initWebR = async () => {
+      try {
+        console.log('🚀 应用启动，开始初始化 WebR...');
+        await webRRunner.initialize();
+        console.log('✅ WebR 初始化完成');
+      } catch (error) {
+        console.error('❌ WebR 初始化失败:', error);
+      }
+    };
+    
+    initWebR();
+  }, []);
   
   const handleBlockDragStart = (block: BlockDefinition, e: React.MouseEvent) => {
     // 将拖拽事件传递给Canvas处理
@@ -35,6 +51,20 @@ const App: React.FC = () => {
   
   return (
     <div className="app">
+      {/* WebR 初始化加载遮罩层 */}
+      {!isWebRReady && (
+        <div className="webr-loading-overlay">
+          <div className="webr-loading-content">
+            <div className="webr-loading-spinner"></div>
+            <h2>正在准备 WebR 环境...</h2>
+            <p className="webr-loading-progress">{webRInitProgress}</p>
+            <p className="webr-loading-tips">
+              💡 首次加载需要下载约 10-20MB 的文件，请耐心等待
+            </p>
+          </div>
+        </div>
+      )}
+      
       <header className="app-header">
         <div className="header-left">
           <h1 className="app-title">

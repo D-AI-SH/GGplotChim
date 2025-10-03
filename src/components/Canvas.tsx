@@ -16,7 +16,7 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
   const [draggingBlockId, setDraggingBlockId] = useState<string | null>(null);
   const [nearestSnapTarget, setNearestSnapTarget] = useState<{ blockId: string; type: 'input' | 'output' } | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
-  const [connectingFrom, setConnectingFrom] = useState<{ blockId: string; type: 'input' | 'output' } | null>(null);
+  const [connectingFrom, setConnectingFrom] = useState<{ blockId: string; type: 'input' | 'output'; isGgplotConnection?: boolean } | null>(null);
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
   const lastUpdateTime = useRef<number>(0);
   const updateThrottle = 16; // 约 60fps
@@ -674,10 +674,21 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
   const [oldConnection, setOldConnection] = useState<{ sourceId: string; targetId: string } | null>(null);
   
   // 开始连接
-  const handleConnectionStart = useCallback((blockId: string, type: 'input' | 'output') => {
+  const handleConnectionStart = useCallback((blockId: string, type: 'input' | 'output', e?: React.MouseEvent) => {
     const block = blocks.find(b => b.id === blockId);
     if (!block) return;
     
+    // 检测是否按住 Shift 键（创建虚线 ggplot 连接）
+    const isGgplotConnection = e?.shiftKey || false;
+    
+    if (isGgplotConnection) {
+      // Shift+拖拽：创建 ggplot 虚线连接（不断开任何现有连接）
+      console.log('🔗 [Canvas] Shift+拖拽：准备创建 ggplot 虚线连接');
+      setConnectingFrom({ blockId, type, isGgplotConnection: true });
+      return;
+    }
+    
+    // 普通拖拽：创建实线连接（执行顺序）
     // 记录旧连接并断开
     if (type === 'output' && block.connections.output) {
       // 从输出点拉线，记录旧的输出连接
@@ -709,7 +720,7 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
       }
     }
     
-    setConnectingFrom({ blockId, type });
+    setConnectingFrom({ blockId, type, isGgplotConnection: false });
   }, [blocks, updateBlock]);
   
   // 完成连接
@@ -725,7 +736,23 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
       return;
     }
     
-    // 只允许 output -> input 的连接
+    // 🔗 处理 ggplot 虚线连接（Shift+拖拽）
+    if (connectingFrom.isGgplotConnection) {
+      console.log('✅ [Canvas] 创建 ggplot 虚线连接:', sourceBlock.id, '->', targetBlock.id);
+      
+      // 更新源积木的 ggplotConnections
+      const updatedSourceBlock = {
+        ...sourceBlock,
+        ggplotConnections: [...(sourceBlock.ggplotConnections || []), targetBlock.id]
+      };
+      
+      updateBlock(sourceBlock.id, updatedSourceBlock);
+      setConnectingFrom(null);
+      setMousePos(null);
+      return;
+    }
+    
+    // 只允许 output -> input 的连接（实线，执行顺序）
     if (connectingFrom.type === 'output' && targetType === 'input') {
       const { source, target } = connectBlocks(sourceBlock, targetBlock);
       
@@ -768,7 +795,7 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
     
     setConnectingFrom(null);
     setMousePos(null);
-  }, [connectingFrom, blocks, updateBlocks]);
+  }, [connectingFrom, blocks, updateBlocks, updateBlock]);
   
   // 添加全局鼠标事件监听
   useEffect(() => {
@@ -1095,7 +1122,7 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
       });
     }
     
-    // 渲染现有连接
+    // 渲染实线连接（执行顺序）
     blocks.forEach(block => {
       if (block.connections.output) {
         const targetBlock = blocks.find(b => b.id === block.connections.output);
@@ -1147,14 +1174,72 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
 
         connections.push(
           <path
-            key={`${block.id}-${block.connections.output}`}
+            key={`solid-${block.id}-${block.connections.output}`}
             d={pathD}
             stroke={color}
             strokeWidth="2"
             fill="none"
-            className="connection-line"
+            className="connection-line connection-line-solid"
           />
         );
+      }
+      
+      // 🔗 渲染虚线连接（ggplot + 关系）
+      if (block.ggplotConnections && block.ggplotConnections.length > 0) {
+        console.log(`[虚线渲染] 积木 ${block.id} (${block.blockType}) 有 ${block.ggplotConnections.length} 个虚线连接:`, block.ggplotConnections);
+        const definition = blockDefinitions.find(d => d.type === block.blockType);
+        const color = definition?.color || '#4f46e5';
+        
+        block.ggplotConnections.forEach(targetId => {
+          const targetBlock = blocks.find(b => b.id === targetId);
+          if (!targetBlock) {
+            console.warn(`ggplot连接目标积木不存在: ${targetId}`);
+            return;
+          }
+          
+          // 获取实际的连接点位置
+          const startPoint = getConnectionPoint(block.id, 'output');
+          const endPoint = getConnectionPoint(targetBlock.id, 'input');
+
+          console.log(`[虚线] 尝试连接 ${block.id} -> ${targetId}:`, { startPoint, endPoint });
+
+          if (!startPoint || !endPoint) {
+            console.warn(`❌ 无法获取ggplot连接点位置:`, {
+              sourceBlock: block.id,
+              targetBlock: targetBlock.id,
+              startPoint,
+              endPoint
+            });
+            return;
+          }
+
+          const startX = startPoint.x;
+          const startY = startPoint.y;
+          const endX = endPoint.x;
+          const endY = endPoint.y;
+
+          // 计算贝塞尔曲线的控制点
+          const controlOffset = Math.abs(endY - startY) * 0.5;
+          const cp1X = startX;
+          const cp1Y = startY + controlOffset;
+          const cp2X = endX;
+          const cp2Y = endY - controlOffset;
+
+          const pathD = `M ${startX} ${startY} C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${endX} ${endY}`;
+
+          connections.push(
+            <path
+              key={`dashed-${block.id}-${targetId}`}
+              d={pathD}
+              stroke={color}
+              strokeWidth="2"
+              strokeDasharray="8,4"
+              fill="none"
+              className="connection-line connection-line-dashed"
+              opacity="0.8"
+            />
+          );
+        });
       }
     });
     
@@ -1265,16 +1350,19 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
         
         const pathD = `M ${startX} ${startY} C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${endX} ${endY}`;
         
+        // 🔗 虚线预览（ggplot 连接）或实线预览（执行顺序）
+        const isDashed = connectingFrom.isGgplotConnection;
+        
         connections.push(
           <g key="preview-connection">
             <path
               d={pathD}
               stroke={color}
               strokeWidth="2"
-              strokeDasharray="5,5"
+              strokeDasharray={isDashed ? "8,4" : "5,5"}
               fill="none"
-              opacity="0.6"
-              className="connection-preview"
+              opacity={isDashed ? "0.7" : "0.6"}
+              className={isDashed ? "connection-preview-dashed" : "connection-preview"}
             />
             {/* 添加动态高亮圆圈 */}
             <circle r="8" fill={color} opacity="0.6">
@@ -1285,6 +1373,19 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
                 calcMode="linear"
               />
             </circle>
+            {/* 如果是虚线连接，显示提示文字 */}
+            {isDashed && (
+              <text
+                x={startX}
+                y={startY - 15}
+                fill={color}
+                fontSize="12"
+                fontWeight="600"
+                textAnchor="middle"
+              >
+                ggplot +
+              </text>
+            )}
           </g>
         );
       }

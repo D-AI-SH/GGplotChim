@@ -10,7 +10,7 @@ interface BlockNodeProps {
   onClick: (e: React.MouseEvent) => void;
   onDelete: (blockId: string) => void;
   onMouseDown?: (e: React.MouseEvent) => void;
-  onConnectionStart?: (blockId: string, type: 'input' | 'output') => void;
+  onConnectionStart?: (blockId: string, type: 'input' | 'output', e?: React.MouseEvent) => void;
   onConnectionEnd?: (blockId: string, type: 'input' | 'output') => void;
   onDropToSlot?: (slotName: string, draggedBlockId: string) => void;
   isDragging?: boolean;
@@ -41,7 +41,7 @@ const BlockNode: React.FC<BlockNodeProps> = ({
     e.stopPropagation();
     e.preventDefault();
     if (onConnectionStart) {
-      onConnectionStart(block.id, type);
+      onConnectionStart(block.id, type, e);
     }
   };
   

@@ -42,6 +42,7 @@ const CodePreview: React.FC = () => {
   const handleCodeChange = (value: string | undefined) => {
     if (!value) return;
     
+    console.log('📝 [CodePreview] 代码变更，长度:', value.length);
     setLocalCode(value);
     
     // 防抖：用户停止输入500ms后才同步到积木
@@ -51,12 +52,14 @@ const CodePreview: React.FC = () => {
     
     debounceTimerRef.current = setTimeout(() => {
       if (isEditable) {
+        console.log('⏰ [CodePreview] 防抖计时器触发，开始同步...');
         updateCodeAndSync(value);
       }
     }, 500);
   };
   
   const handleSyncNow = () => {
+    console.log('🔄 [CodePreview] 手动触发同步');
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }

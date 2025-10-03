@@ -58,7 +58,7 @@
 
 .block-item {
   padding: var(--spacing-md);
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);  /* 增加积木之间的间距 */
   background: var(--bg-white);
   border: var(--border-width) solid var(--border-color);
   border-left: 4px solid #3b82f6;

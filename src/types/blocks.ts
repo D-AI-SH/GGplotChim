@@ -116,9 +116,10 @@ export interface BlockInstance {
   position: { x: number; y: number };
   params: Record<string, any>;
   connections: {
-    input: string | null;  // 输入连接的积木 ID（上一个积木）
-    output: string | null; // 输出连接的积木 ID（只能连接一个积木，串行）
+    input: string | null;  // 输入连接的积木 ID（上一个积木）- 实线，代表执行顺序
+    output: string | null; // 输出连接的积木 ID（只能连接一个积木，串行）- 实线，代表执行顺序
   };
+  ggplotConnections?: string[]; // ggplot + 连接的积木 ID 列表 - 虚线，代表组合关系（Shift+拖拽创建）
   order: number; // 在图层链中的顺序（0 为起始积木）
   isSelected?: boolean; // 是否被选中（用于多选）
   children?: Record<string, string[]>; // 容器型积木的子积木 {slotName: [childBlockId1, childBlockId2, ...]}

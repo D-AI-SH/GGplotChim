@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>测试赋值语句解析 - 修复版</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f5f5f5; }
+    .test-case { 
+      margin: 15px 0; 
+      padding: 15px; 
+      border-radius: 8px;
+      background: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .code { 
+      font-family: 'Consolas', monospace; 
+      background: #f0f0f0; 
+      padding: 8px;
+      border-radius: 4px;
+      margin: 5px 0;
+    }
+    .result { margin-top: 10px; }
+    .block-type { 
+      font-weight: bold; 
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin: 5px 0;
+    }
+    .assign { background: #ef4444; color: white; }
+    .function-call { background: #f59e0b; color: white; }
+    .custom { background: #94a3b8; color: white; }
+    .params { color: #64748b; font-size: 0.9em; margin-top: 5px; }
+  </style>
+</head>
+<body>
+  <h1>🔧 测试赋值语句解析（修复版）</h1>
+  <div id="output"></div>
+  
+  <script>
+    // 模拟修复后的解析函数
+    function parseCodeLine(line) {
+      const trimmed = line.trim();
+      
+      if (!trimmed || trimmed.startsWith('#')) {
+        return null;
+      }
+      
+      // 解析赋值语句 - 修复版
+      if (trimmed.includes('<-')) {
+        // 只分割第一个 <-
+        const firstArrowIndex = trimmed.indexOf('<-');
+        if (firstArrowIndex > 0) {
+          const varName = trimmed.substring(0, firstArrowIndex).trim();
+          const value = trimmed.substring(firstArrowIndex + 2).trim();
+          
+          // 确保变量名是合法的标识符
+          if (/^[\w.$]+$/.test(varName)) {
+            if (varName === 'data') {
+              return {
+                blockType: 'DATA_IMPORT',
+                params: { source: value },
+                original: trimmed
+              };
+            }
+            
+            return {
+              blockType: 'ASSIGN',
+              params: { variable: varName, value: value },
+              original: trimmed
+            };
+          }
+        }
+      }
+      
+      // 解析函数调用
+      const match = trimmed.match(/^(\w+)\((.*)\)$/s);
+      if (match) {
+        return {
+          blockType: 'FUNCTION_CALL',
+          params: {
+            function_name: match[1],
+            args: match[2]
+          },
+          original: trimmed
+        };
+      }
+      
+      return {
+        blockType: 'CUSTOM_CODE',
+        params: { code: trimmed },
+        original: trimmed
+      };
+    }
+    
+    // 测试用例（来自圆形堆叠条形图）
+    const testCases = [
+      { line: 'empty_bar <- 2', expected: 'ASSIGN' },
+      { line: 'nObsType <- nlevels(as.factor(data$observation))', expected: 'ASSIGN' },
+      { line: 'angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar', expected: 'ASSIGN' },
+      { line: 'label_data$hjust <- ifelse( angle < -90, 1, 0)', expected: 'ASSIGN' },
+      { line: 'label_data$angle <- ifelse(angle < -90, angle+180, angle)', expected: 'ASSIGN' },
+      { line: 'data <- data.frame(x=1:10, y=rnorm(10))', expected: 'DATA_IMPORT' },
+      { line: 'to_add <- data.frame( matrix(NA, empty_bar*nlevels(data$group)*nObsType, ncol(data)) )', expected: 'ASSIGN' },
+      { line: 'library(tidyverse)', expected: 'FUNCTION_CALL' },
+      { line: 'p <- ggplot(data) +', expected: 'ASSIGN' }
+    ];
+    
+    const output = document.getElementById('output');
+    let passCount = 0;
+    let failCount = 0;
+    
+    testCases.forEach((testCase, index) => {
+      const result = parseCodeLine(testCase.line);
+      const passed = result && result.blockType === testCase.expected;
+      
+      if (passed) passCount++;
+      else failCount++;
+      
+      const div = document.createElement('div');
+      div.className = 'test-case';
+      div.style.borderLeft = passed ? '4px solid #10b981' : '4px solid #ef4444';
+      
+      const blockTypeClass = result ? result.blockType.toLowerCase().replace('_', '-') : 'custom';
+      
+      div.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong>测试 #${index + 1}</strong>
+          <span style="color: ${passed ? '#10b981' : '#ef4444'}; font-weight: bold;">
+            ${passed ? '✅ 通过' : '❌ 失败'}
+          </span>
+        </div>
+        <div class="code">${testCase.line}</div>
+        <div class="result">
+          <span class="block-type ${blockTypeClass}">${result ? result.blockType : 'NULL'}</span>
+          ${!passed ? `<span style="color: #ef4444; margin-left: 10px;">预期: ${testCase.expected}</span>` : ''}
+        </div>
+        ${result && result.params ? `<div class="params">${JSON.stringify(result.params, null, 2)}</div>` : ''}
+      `;
+      output.appendChild(div);
+    });
+    
+    // 显示统计
+    const summary = document.createElement('div');
+    summary.style.cssText = 'margin: 20px 0; padding: 20px; background: #f0f9ff; border-radius: 8px; text-align: center;';
+    summary.innerHTML = `
+      <h2>测试结果</h2>
+      <p style="font-size: 1.2em;">
+        <span style="color: #10b981; font-weight: bold;">${passCount} 通过</span> / 
+        <span style="color: #ef4444; font-weight: bold;">${failCount} 失败</span> / 
+        <span style="font-weight: bold;">${testCases.length} 总计</span>
+      </p>
+    `;
+    output.insertBefore(summary, output.firstChild);
+  </script>
+</body>
+</html>
+

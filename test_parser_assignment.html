@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>测试赋值语句解析</title>
+</head>
+<body>
+  <h1>测试赋值语句解析</h1>
+  <div id="output"></div>
+  
+  <script>
+    // 复制 codeParser.ts 的关键函数
+    function parseFunctionCall(code) {
+      const match = code.trim().match(/^(\w+)\((.*)\)$/s);
+      if (!match) return null;
+      return {
+        name: match[1],
+        args: match[2]
+      };
+    }
+    
+    function parseCodeLine(line) {
+      const trimmed = line.trim();
+      
+      if (!trimmed || trimmed.startsWith('#')) {
+        return null;
+      }
+      
+      // 解析赋值语句
+      if (trimmed.includes('<-')) {
+        const parts = trimmed.split('<-').map(p => p.trim());
+        if (parts.length === 2) {
+          const varName = parts[0];
+          const value = parts[1];
+          
+          if (varName === 'data') {
+            return {
+              blockType: 'DATA_IMPORT',
+              params: { source: value }
+            };
+          }
+          
+          return {
+            blockType: 'ASSIGN',
+            params: { variable: varName, value: value }
+          };
+        }
+      }
+      
+      // 解析函数调用
+      const funcCall = parseFunctionCall(trimmed);
+      if (funcCall) {
+        return {
+          blockType: 'FUNCTION_CALL',
+          params: {
+            function_name: funcCall.name,
+            args: funcCall.args
+          }
+        };
+      }
+      
+      return {
+        blockType: 'CUSTOM_CODE',
+        params: { code: trimmed }
+      };
+    }
+    
+    // 测试用例
+    const testCases = [
+      'empty_bar <- 2',
+      'nObsType <- nlevels(as.factor(data$observation))',
+      'data <- iris',
+      'library(tidyverse)',
+      'for (i in 1:10) {',
+      'x <- mean(data$value)',
+      'result <- c(1, 2, 3)',
+      'angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar'
+    ];
+    
+    const output = document.getElementById('output');
+    testCases.forEach(testCase => {
+      const result = parseCodeLine(testCase);
+      const div = document.createElement('div');
+      div.style.marginBottom = '15px';
+      div.style.padding = '10px';
+      div.style.border = '1px solid #ccc';
+      div.innerHTML = `
+        <strong>输入:</strong> <code>${testCase}</code><br>
+        <strong>解析结果:</strong> <code>${JSON.stringify(result, null, 2)}</code>
+      `;
+      output.appendChild(div);
+    });
+  </script>
+</body>
+</html>
+

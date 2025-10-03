@@ -212,9 +212,12 @@ function parseCodeLine(line: string): ParsedBlock | null {
     return null;
   }
   
+  console.log('🔍 [Parser] 解析代码行:', trimmed);
+  
   // 解析 for 循环 (例如: for (i in 1:10) {)
   const forMatch = trimmed.match(/^for\s*\(\s*(\w+)\s+in\s+(.+?)\)\s*\{?$/);
   if (forMatch) {
+    console.log('✅ [Parser] 识别为 FOR_LOOP');
     return {
       blockType: BlockType.FOR_LOOP,
       params: {
@@ -227,6 +230,7 @@ function parseCodeLine(line: string): ParsedBlock | null {
   // 解析 if 语句 (例如: if (x > 0) {)
   const ifMatch = trimmed.match(/^if\s*\((.+?)\)\s*\{?$/);
   if (ifMatch) {
+    console.log('✅ [Parser] 识别为 IF_STATEMENT');
     return {
       blockType: BlockType.IF_STATEMENT,
       params: {
@@ -241,33 +245,44 @@ function parseCodeLine(line: string): ParsedBlock | null {
   }
   
   // 解析赋值语句 (例如: data <- iris)
+  // ⚠️ 必须在解析函数调用之前！因为赋值右边可能包含函数调用
   if (trimmed.includes('<-')) {
-    const parts = trimmed.split('<-').map(p => p.trim());
-    if (parts.length === 2) {
-      const varName = parts[0];
-      const value = parts[1];
+    // 🔧 修复：只分割第一个 <-，因为右边的表达式可能包含 <-（如 angle < -90）
+    const firstArrowIndex = trimmed.indexOf('<-');
+    if (firstArrowIndex > 0) {
+      const varName = trimmed.substring(0, firstArrowIndex).trim();
+      const value = trimmed.substring(firstArrowIndex + 2).trim();
       
-      // 检查是否是数据导入
-      if (varName === 'data') {
+      // 确保变量名是合法的标识符（不包含空格、特殊字符等，但允许 $ 和数字）
+      if (/^[\w.$]+$/.test(varName)) {
+        console.log('✅ [Parser] 识别为赋值语句:', { varName, value });
+        
+        // 检查是否是数据导入
+        if (varName === 'data') {
+          console.log('  → DATA_IMPORT');
+          return {
+            blockType: BlockType.DATA_IMPORT,
+            params: { source: value }
+          };
+        }
+        
+        // 一般赋值
+        console.log('  → ASSIGN');
         return {
-          blockType: BlockType.DATA_IMPORT,
-          params: { source: value }
+          blockType: BlockType.ASSIGN,
+          params: { variable: varName, value: value }
         };
       }
-      
-      // 一般赋值
-      return {
-        blockType: BlockType.ASSIGN,
-        params: { variable: varName, value: value }
-      };
     }
   }
   
   // 解析函数调用
   const funcCall = parseFunctionCall(trimmed);
   if (funcCall) {
+    console.log('🔧 [Parser] 检测到函数调用:', funcCall.name);
     const blockType = matchBlockType(funcCall.name, {});
     if (blockType) {
+      console.log('✅ [Parser] 识别为已知函数:', blockType);
       const parsedParams = parseArguments(funcCall.args);
       const normalizedParams = normalizeParams(blockType, parsedParams);
       
@@ -277,7 +292,8 @@ function parseCodeLine(line: string): ParsedBlock | null {
       };
     }
     
-    // 如果是未知的函数调用，使用 FUNCTION_CALL 积木而不是 CUSTOM_CODE
+    // 如果是未知的函数调用，使用 FUNCTION_CALL 积木
+    console.log('⚠️ [Parser] 识别为未知函数，使用 FUNCTION_CALL');
     return {
       blockType: BlockType.FUNCTION_CALL,
       params: {
@@ -287,7 +303,8 @@ function parseCodeLine(line: string): ParsedBlock | null {
     };
   }
   
-  // 无法识别的代码 - 创建自定义代码块（只用于真正无法识别的语句）
+  // 无法识别的代码 - 创建自定义代码块
+  console.log('❌ [Parser] 无法识别，使用 CUSTOM_CODE');
   return {
     blockType: BlockType.CUSTOM_CODE,
     params: { code: trimmed }
@@ -366,8 +383,13 @@ export function parseRCodeToBlocks(code: string): BlockInstance[] {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     
-    // 跳过注释、空行和 library 语句（自动生成的，不需要解析）
-    if (!line || line.startsWith('#') || line.startsWith('library(')) {
+    // 跳过注释和空行
+    if (!line || line.startsWith('#')) {
+      continue;
+    }
+    
+    // 跳过 library 语句（会自动添加）
+    if (line.startsWith('library(')) {
       continue;
     }
     
@@ -408,34 +430,40 @@ export function parseRCodeToBlocks(code: string): BlockInstance[] {
         const parsed = parseCodeLine(part);
         if (parsed) {
           const blockId = `block-${blockIdCounter++}`;
-          const prevBlockId = index > 0 ? currentChainBlocks[index - 1].id : null;
           
           const blockInstance: BlockInstance = {
             id: blockId,
             blockType: parsed.blockType,
             position: { 
               x: chainStartX, 
-              y: chainStartY + index * 100  // 垂直排列，每个积木间隔100px
+              y: chainStartY + index * 150  // 垂直排列，每个积木间隔150px（增加间距）
             },
             params: parsed.params,
             connections: {
-              input: prevBlockId,  // 正确引用前一个积木的ID
-              output: null         // 暂时为空，在下一次迭代中设置
+              input: null,  // 🔗 ggplot 链不使用 input/output（执行顺序）
+              output: null
             },
             order: index
           };
           
-          // 设置前一个块的输出连接指向当前积木
-          if (index > 0 && currentChainBlocks.length > 0) {
-            currentChainBlocks[currentChainBlocks.length - 1].connections.output = blockId;
+          // 🔗 使用 ggplotConnections（虚线连接）代替 input/output
+          if (index === 0) {
+            // 第一个积木（通常是 ggplot()），连接后续所有积木
+            blockInstance.ggplotConnections = [];
           }
           
           currentChainBlocks.push(blockInstance);
         }
       });
       
+      // 🔗 设置 ggplotConnections
+      if (currentChainBlocks.length > 0) {
+        const firstBlock = currentChainBlocks[0];
+        firstBlock.ggplotConnections = currentChainBlocks.slice(1).map(b => b.id);
+      }
+      
       blocks.push(...currentChainBlocks);
-      currentY += currentChainBlocks.length * 100 + 50; // 更新全局Y坐标
+      currentY += currentChainBlocks.length * 150 + 80; // 更新全局Y坐标（增加间距）
       currentChainBlocks = [];
       chainBuffer = '';
     } else if (!inChain && !chainBuffer) {
@@ -458,7 +486,7 @@ export function parseRCodeToBlocks(code: string): BlockInstance[] {
         };
         
         blocks.push(blockInstance);
-        currentY += 100; // 为下一个独立积木预留空间
+        currentY += 150; // 为下一个独立积木预留空间（增加间距）
       }
     }
   }
@@ -474,31 +502,37 @@ export function parseRCodeToBlocks(code: string): BlockInstance[] {
       const parsed = parseCodeLine(part);
       if (parsed) {
         const blockId = `block-${blockIdCounter++}`;
-        const prevBlockId = index > 0 ? currentChainBlocks[index - 1].id : null;
         
         const blockInstance: BlockInstance = {
           id: blockId,
           blockType: parsed.blockType,
           position: { 
             x: chainStartX, 
-            y: chainStartY + index * 100  // 垂直排列
+            y: chainStartY + index * 150  // 垂直排列（增加间距）
           },
           params: parsed.params,
           connections: {
-            input: prevBlockId,  // 正确引用前一个积木的ID
+            input: null,  // 🔗 ggplot 链不使用 input/output（执行顺序）
             output: null
           },
           order: index
         };
         
-        // 设置前一个块的输出连接指向当前积木
-        if (index > 0 && currentChainBlocks.length > 0) {
-          currentChainBlocks[currentChainBlocks.length - 1].connections.output = blockId;
+        // 🔗 使用 ggplotConnections（虚线连接）代替 input/output
+        if (index === 0) {
+          // 第一个积木（通常是 ggplot()），连接后续所有积木
+          blockInstance.ggplotConnections = [];
         }
         
         currentChainBlocks.push(blockInstance);
       }
     });
+    
+    // 🔗 设置 ggplotConnections
+    if (currentChainBlocks.length > 0) {
+      const firstBlock = currentChainBlocks[0];
+      firstBlock.ggplotConnections = currentChainBlocks.slice(1).map(b => b.id);
+    }
     
     blocks.push(...currentChainBlocks);
   }
