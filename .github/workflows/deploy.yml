@@ -36,7 +36,7 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: production
-          PUBLIC_URL: /ggplotchim
+          PUBLIC_URL: /GGplotChim
 
       # 5. 部署到 gh-pages 分支
       - name: Deploy to gh-pages

@@ -1,5 +1,5 @@
 {
-  "name": "ggplotchim",
+  "name": "GGplotChim",
   "version": "1.0.0",
   "description": "Visual programming tool for ggplot2 - drag and drop blocks to create R visualizations",
   "main": "index.js",
