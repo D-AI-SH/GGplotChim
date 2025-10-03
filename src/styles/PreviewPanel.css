@@ -6,36 +6,36 @@
 }
 
 .preview-header {
-  padding: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  padding: var(--spacing-lg);
+  border-bottom: var(--border-width) solid var(--border-color);
 }
 
 .preview-tabs {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
 }
 
 .preview-tab {
   flex: 1;
-  padding: 0.6rem 1rem;
+  padding: var(--spacing-md) var(--spacing-lg);
   background: transparent;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s;
-  color: #4b5563;
+  font-size: var(--font-base);
+  transition: var(--transition-all);
+  color: var(--color-gray-600);
 }
 
 .preview-tab:hover {
-  background: #f3f4f6;
+  background: var(--color-gray-100);
 }
 
 .preview-tab.active {
-  background: #4f46e5;
-  color: white;
-  border-color: #4f46e5;
-  font-weight: 600;
+  background: var(--color-primary);
+  color: var(--bg-white);
+  border-color: var(--color-primary);
+  font-weight: var(--font-semibold);
 }
 
 .preview-content {
@@ -52,28 +52,28 @@
 
 .code-actions {
   display: flex;
-  gap: 0.5rem;
-  padding: 0.8rem;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--color-gray-50);
+  border-bottom: var(--border-width) solid var(--border-color);
 }
 
 .action-btn {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.5rem 0.8rem;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-white);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: 0.85rem;
-  transition: all 0.2s;
+  font-size: var(--font-sm);
+  transition: var(--transition-all);
 }
 
 .action-btn:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
+  background: var(--color-gray-100);
+  border-color: var(--border-color-light);
 }
 
 .code-editor {
@@ -88,77 +88,77 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  padding: 2rem;
+  padding: var(--spacing-2xl);
 }
 
 .plot-empty {
   text-align: center;
-  color: #6b7280;
+  color: var(--color-gray-500);
 }
 
 .empty-icon {
-  margin-bottom: 1rem;
-  color: #9ca3af;
+  margin-bottom: var(--spacing-lg);
+  color: var(--color-gray-400);
 }
 
 .plot-empty h3 {
-  font-size: 1.2rem;
-  margin-bottom: 0.5rem;
-  color: #374151;
+  font-size: var(--font-xl);
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-gray-700);
 }
 
 .plot-empty p {
-  margin-bottom: 1.5rem;
-  font-size: 0.95rem;
+  margin-bottom: var(--spacing-xl);
+  font-size: var(--font-md);
 }
 
 .run-button {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.8rem 1.5rem;
-  background: #4f46e5;
-  color: white;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-xl);
+  background: var(--color-primary);
+  color: var(--bg-white);
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
+  border-radius: var(--radius-lg);
+  font-size: var(--font-md);
+  font-weight: var(--font-semibold);
   cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: 1.5rem;
+  transition: var(--transition-all);
+  margin-bottom: var(--spacing-xl);
 }
 
 .run-button:hover:not(:disabled) {
-  background: #4338ca;
+  background: var(--color-primary-dark);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  box-shadow: var(--shadow-hover);
 }
 
 .run-button:disabled {
-  background: #9ca3af;
+  background: var(--color-gray-400);
   cursor: not-allowed;
 }
 
 .info-box {
-  margin-top: 1.5rem;
-  padding: 1rem;
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-  border-radius: 8px;
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background: var(--color-info-bg);
+  border: var(--border-width) solid var(--color-info-border);
+  border-radius: var(--radius-lg);
   text-align: left;
-  font-size: 0.85rem;
-  color: #0c4a6e;
+  font-size: var(--font-sm);
+  color: var(--color-info);
 }
 
 .info-box strong {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--spacing-sm);
   color: #075985;
 }
 
 .info-box ul {
-  margin-top: 0.5rem;
-  padding-left: 1.5rem;
+  margin-top: var(--spacing-sm);
+  padding-left: var(--spacing-xl);
 }
 
 .info-box li {

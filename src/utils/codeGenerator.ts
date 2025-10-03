@@ -2,8 +2,31 @@ import { BlockInstance, BlockType } from '../types/blocks';
 import { blockDefinitions } from '../data/blockDefinitions';
 
 // 简单的模板引擎
-function renderTemplate(template: string, params: Record<string, any>): string {
+function renderTemplate(template: string, params: Record<string, any>, childrenCode?: Record<string, string[]>): string {
+  console.log('🔧 Template before processing:', JSON.stringify(template));
   let result = template;
+  
+  // 处理子积木循环 {{#each children.slotName}}...{{/each}}
+  // 注意：必须在替换简单变量之前处理，否则 {{this}} 会被误替换
+  result = result.replace(/\{\{#each\s+children\.(\w+)\}\}(.*?)\{\{\/each\}\}/gs, (match, slotName, itemTemplate) => {
+    if (childrenCode && childrenCode[slotName]) {
+      console.log('Processing slot:', slotName, 'with codes:', childrenCode[slotName]);
+      console.log('Item template:', JSON.stringify(itemTemplate));
+      const generated = childrenCode[slotName]
+        .map(code => {
+          // 为子代码的每一行添加缩进（跳过空行）
+          const indentedCode = code.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n');
+          const replaced = itemTemplate.replace(/\{\{this\}\}/g, indentedCode);
+          console.log('Generated line:', JSON.stringify(replaced));
+          return replaced;
+        })
+        .join('\n');
+      console.log('Final generated:', JSON.stringify(generated));
+      return generated;
+    }
+    console.log('No children code for slot:', slotName);
+    return '';
+  });
   
   // 替换简单变量 {{variable}}
   result = result.replace(/\{\{(\w+)\}\}/g, (match, key) => {
@@ -25,8 +48,10 @@ function getAllChains(blocks: BlockInstance[]): BlockInstance[][] {
   const chains: BlockInstance[][] = [];
   const visited = new Set<string>();
   
-  // 找到所有起始积木（没有输入连接的积木）
-  const startBlocks = blocks.filter(b => b.connections.input === null);
+  // 找到所有起始积木（没有输入连接且没有父积木的积木）
+  const startBlocks = blocks.filter(b => 
+    b.connections.input === null && !b.parentId
+  );
   
   // 为每个起始积木构建链
   startBlocks.forEach(startBlock => {
@@ -89,11 +114,32 @@ export function generateRCode(blocks: BlockInstance[]): string {
     // 按顺序生成每个积木的代码
     const chainCode: string[] = [];
     
-    chain.forEach((block, index) => {
+    // 递归生成积木代码（支持嵌套）
+    const generateBlockCode = (block: BlockInstance): string => {
       const def = blockDefinitions.find(d => d.type === block.blockType);
-      if (!def) return;
+      if (!def) return '';
       
-      const code = renderTemplate(def.rTemplate, block.params);
+      // 如果是容器型积木，先生成子积木代码
+      let childrenCode: Record<string, string[]> | undefined;
+      if (def.isContainer && block.children) {
+        childrenCode = {};
+        Object.keys(block.children).forEach(slotName => {
+          const childIds = block.children![slotName] || [];
+          childrenCode![slotName] = childIds
+            .map(childId => blocks.find(b => b.id === childId))
+            .filter(Boolean)
+            .map(childBlock => generateBlockCode(childBlock as BlockInstance));
+        });
+      }
+      
+      return renderTemplate(def.rTemplate, block.params, childrenCode);
+    };
+    
+    chain.forEach((block, index) => {
+      // 跳过已经被嵌入到容器中的积木
+      if (block.parentId) return;
+      
+      const code = generateBlockCode(block);
       
       if (index === 0) {
         // 第一个积木（通常是 ggplot() 或数据赋值）

@@ -1,18 +1,21 @@
 import React from 'react';
 import { BlockInstance, BlockDefinition } from '../types/blocks';
 import { useBlockStore } from '../store/useBlockStore';
+import { blockDefinitions } from '../data/blockDefinitions';
 import { X, Circle } from 'lucide-react';
 
 interface BlockNodeProps {
   block: BlockInstance;
   definition: BlockDefinition;
   onClick: (e: React.MouseEvent) => void;
-  onDelete: () => void;
+  onDelete: (blockId: string) => void;
   onMouseDown?: (e: React.MouseEvent) => void;
   onConnectionStart?: (blockId: string, type: 'input' | 'output') => void;
   onConnectionEnd?: (blockId: string, type: 'input' | 'output') => void;
+  onDropToSlot?: (slotName: string, draggedBlockId: string) => void;
   isDragging?: boolean;
   isSelected?: boolean;
+  dropTarget?: { containerId: string; slotName: string; insertIndex: number } | null;
 }
 
 const BlockNode: React.FC<BlockNodeProps> = ({ 
@@ -23,9 +26,16 @@ const BlockNode: React.FC<BlockNodeProps> = ({
   onMouseDown,
   onConnectionStart,
   onConnectionEnd,
+  onDropToSlot,
   isDragging = false,
-  isSelected = false
+  isSelected = false,
+  dropTarget = null
 }) => {
+  const { blocks } = useBlockStore();
+  
+  const getBlockDefinition = (blockType: string) => {
+    return blockDefinitions.find(def => def.type === blockType);
+  };
   
   const handleConnectionStart = (e: React.MouseEvent, type: 'input' | 'output') => {
     e.stopPropagation();
@@ -43,9 +53,12 @@ const BlockNode: React.FC<BlockNodeProps> = ({
     }
   };
   
+  const isContainer = definition.slots && definition.slots.length > 0;
+  
   return (
     <div
-      className={`block-node ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''}`}
+      className={`block-node ${isContainer ? 'container-block' : ''} ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''}`}
+      data-block-id={block.id}
       style={{
         borderLeftColor: definition.color,
         boxShadow: isSelected ? '0 0 0 3px rgba(79, 70, 229, 0.5)' : undefined
@@ -69,7 +82,7 @@ const BlockNode: React.FC<BlockNodeProps> = ({
           className="block-node-delete"
           onClick={(e) => {
             e.stopPropagation();
-            onDelete();
+            onDelete(block.id);
           }}
           onMouseDown={(e) => {
             e.stopPropagation();
@@ -92,6 +105,66 @@ const BlockNode: React.FC<BlockNodeProps> = ({
           );
         })}
       </div>
+      
+      {/* 容器型积木的插槽 */}
+      {definition.isContainer && definition.slots && (
+        <div className="block-slots">
+          {definition.slots.map((slot) => {
+            const childrenIds = block.children?.[slot.name] || [];
+            const isDropTarget = dropTarget?.containerId === block.id && dropTarget?.slotName === slot.name;
+            
+            return (
+              <div 
+                key={slot.name} 
+                className={`block-slot ${isDropTarget ? 'drop-target' : ''}`}
+              >
+                <div className="slot-label">{slot.label}</div>
+                <div className="slot-drop-zone">
+                  {childrenIds.length === 0 ? (
+                    <>
+                      <div className="slot-placeholder">拖拽积木到这里</div>
+                      {isDropTarget && <div className="drop-indicator" style={{ top: 0 }} />}
+                    </>
+                  ) : (
+                    <div className="slot-children">
+                      {childrenIds.map((childId, index) => {
+                        const childBlock = blocks.find(b => b.id === childId);
+                        const childDef = childBlock ? getBlockDefinition(childBlock.blockType) : null;
+                        if (!childBlock || !childDef) return null;
+                        
+                        return (
+                          <React.Fragment key={childId}>
+                            {isDropTarget && dropTarget.insertIndex === index && (
+                              <div className="drop-indicator" />
+                            )}
+                            <BlockNode
+                              block={childBlock}
+                              definition={childDef}
+                              onClick={(e) => { e.stopPropagation(); onClick(e); }}
+                              onDelete={onDelete}
+                              onMouseDown={(e) => { 
+                                e.stopPropagation(); 
+                                onMouseDown?.(e);
+                              }}
+                              onConnectionStart={onConnectionStart}
+                              onConnectionEnd={onConnectionEnd}
+                              onDropToSlot={onDropToSlot}
+                              dropTarget={dropTarget}
+                            />
+                          </React.Fragment>
+                        );
+                      })}
+                      {isDropTarget && dropTarget.insertIndex === childrenIds.length && (
+                        <div className="drop-indicator" />
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
       
       {/* 输出连接点（底部） */}
       <div 

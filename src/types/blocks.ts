@@ -88,6 +88,13 @@ export interface BlockParam {
   required?: boolean;
 }
 
+// 容器型积木的插槽定义
+export interface BlockSlot {
+  name: string;
+  label: string;
+  allowMultiple?: boolean; // 是否允许多个子积木
+}
+
 export interface BlockDefinition {
   id: string;
   type: BlockType;
@@ -98,6 +105,8 @@ export interface BlockDefinition {
   color: string;
   params: BlockParam[];
   rTemplate: string; // R 代码模板
+  isContainer?: boolean; // 是否为容器型积木（C型）
+  slots?: BlockSlot[]; // 容器插槽（如 for 循环的循环体）
 }
 
 export interface BlockInstance {
@@ -111,6 +120,9 @@ export interface BlockInstance {
   };
   order: number; // 在图层链中的顺序（0 为起始积木）
   isSelected?: boolean; // 是否被选中（用于多选）
+  children?: Record<string, string[]>; // 容器型积木的子积木 {slotName: [childBlockId1, childBlockId2, ...]}
+  parentId?: string | null; // 父容器积木 ID（如果在容器内）
+  slotName?: string; // 所在的插槽名称
 }
 
 export interface DataColumn {

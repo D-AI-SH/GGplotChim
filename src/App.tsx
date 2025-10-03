@@ -75,9 +75,17 @@ const App: React.FC = () => {
       </main>
       
       <footer className="app-footer">
-        <p>
-          <strong>提示：</strong>从左侧拖拽积木到画布，实时生成 R 代码
-        </p>
+        <div>
+          <p>
+            <strong>快捷键：</strong>
+            <span style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}>
+              框选多选 | Ctrl+点击切换选择 | Ctrl+A全选 | Delete删除 | ESC取消选择
+            </span>
+          </p>
+          <p style={{ marginTop: '0.3rem', fontSize: '0.8rem', color: '#9ca3af' }}>
+            <strong>提示：</strong>在空白区域拖动鼠标可以框选多个积木，批量移动
+          </p>
+        </div>
         <p className="footer-info">
           GGplotChim v1.0.0 | 基于 React 18 + TypeScript
         </p>

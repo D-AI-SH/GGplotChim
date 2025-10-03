@@ -1,0 +1,75 @@
+/* ========== 通用动画效果 ========== */
+
+/* 脉动效果 */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* 选中发光效果 */
+@keyframes selected-glow {
+  0%, 100% {
+    box-shadow: var(--shadow-primary);
+  }
+  50% {
+    box-shadow: var(--shadow-primary-lg);
+  }
+}
+
+/* 框选脉动效果 */
+@keyframes selection-pulse {
+  0%, 100% {
+    border-color: var(--color-primary);
+    background-color: rgba(79, 70, 229, 0.1);
+  }
+  50% {
+    border-color: var(--color-primary-light);
+    background-color: rgba(79, 70, 229, 0.15);
+  }
+}
+
+/* 吸附预览脉动 */
+@keyframes snap-pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* 在连接线上滑动的动画 */
+@keyframes snap-slide {
+  0% {
+    offset-distance: 0%;
+    opacity: 0.4;
+    r: 8;
+  }
+  50% {
+    offset-distance: 100%;
+    opacity: 1;
+    r: 12;
+  }
+  100% {
+    offset-distance: 0%;
+    opacity: 0.4;
+    r: 8;
+  }
+}
+
+/* 放置指示器脉动 */
+@keyframes drop-indicator-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scaleY(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1.2);
+  }
+}
+

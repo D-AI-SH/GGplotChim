@@ -33,7 +33,8 @@ export const blockDefinitions: BlockDefinition[] = [
       {
         name: 'value',
         type: 'text',
-        label: '值',
+        label: '输出内容',
+        defaultValue: 'data',
         required: true
       }
     ],
@@ -52,12 +53,14 @@ export const blockDefinitions: BlockDefinition[] = [
         name: 'variable',
         type: 'text',
         label: '变量名',
+        defaultValue: 'x',
         required: true
       },
       {
         name: 'value',
         type: 'text',
-        label: '值',
+        label: '赋值内容',
+        defaultValue: '10',
         required: true
       }
     ],
@@ -69,31 +72,33 @@ export const blockDefinitions: BlockDefinition[] = [
     type: BlockType.FOR_LOOP,
     category: BlockCategory.BASE,
     label: 'for循环',
-    description: 'for循环语句',
+    description: 'for循环语句（C型容器）',
     color: '#ef4444',
+    isContainer: true,
     params: [
       {
         name: 'var',
         type: 'text',
-        label: '变量',
+        label: '循环变量',
         defaultValue: 'i',
         required: true
       },
       {
         name: 'range',
         type: 'text',
-        label: '范围',
+        label: '遍历',
         defaultValue: '1:10',
         required: true
-      },
-      {
-        name: 'body',
-        type: 'text',
-        label: '循环体',
-        required: false
       }
     ],
-    rTemplate: 'for ({{var}} in {{range}}) {{{#if body}}\n  {{body}}\n{{/if}}}'
+    slots: [
+      {
+        name: 'body',
+        label: '循环执行',
+        allowMultiple: true
+      }
+    ],
+    rTemplate: 'for ({{var}} in {{range}}) {\n{{#each children.body}}{{this}}{{/each}}\n}'
   },
   
   {
@@ -101,29 +106,26 @@ export const blockDefinitions: BlockDefinition[] = [
     type: BlockType.IF_STATEMENT,
     category: BlockCategory.BASE,
     label: 'if语句',
-    description: '条件判断语句',
+    description: '条件判断语句（C型容器）',
     color: '#ef4444',
+    isContainer: true,
     params: [
       {
         name: 'condition',
         type: 'text',
-        label: '条件',
+        label: '如果',
+        defaultValue: 'x > 0',
         required: true
-      },
-      {
-        name: 'then_body',
-        type: 'text',
-        label: 'then语句',
-        required: false
-      },
-      {
-        name: 'else_body',
-        type: 'text',
-        label: 'else语句',
-        required: false
       }
     ],
-    rTemplate: 'if ({{condition}}) {{{#if then_body}}\n  {{then_body}}\n{{/if}}}{{#if else_body}} else {\n  {{else_body}}\n}{{/if}}'
+    slots: [
+      {
+        name: 'then',
+        label: '那么执行',
+        allowMultiple: true
+      }
+    ],
+    rTemplate: 'if ({{condition}}) {\n{{#each children.then}}{{this}}{{/each}}\n}'
   },
   
   {
@@ -138,12 +140,14 @@ export const blockDefinitions: BlockDefinition[] = [
         name: 'function_name',
         type: 'text',
         label: '函数名',
+        defaultValue: 'mean',
         required: true
       },
       {
         name: 'args',
         type: 'text',
-        label: '参数',
+        label: '函数参数',
+        defaultValue: 'data$column',
         required: false
       }
     ],
@@ -162,6 +166,7 @@ export const blockDefinitions: BlockDefinition[] = [
         name: 'text',
         type: 'text',
         label: '注释内容',
+        defaultValue: '这是一行注释',
         required: true
       }
     ],

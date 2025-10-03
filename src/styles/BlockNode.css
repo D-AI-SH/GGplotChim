@@ -2,35 +2,42 @@
 .block-node {
   position: relative;
   min-width: 220px;
-  padding: 0.8rem;
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
-  background: white;
-  border: 2px solid #e5e7eb;
+  padding: var(--spacing-md);
+  padding-top: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+  background: var(--bg-white);
+  border: var(--border-width-thick) solid var(--border-color);
   border-left: 5px solid #3b82f6;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   cursor: move;
-  transition: box-shadow 0.2s;
+  transition: box-shadow var(--transition-base);
   user-select: none;
 }
 
+/* 容器类积木的浅紫色背景 */
+.block-node.container-block {
+  background: var(--bg-container);
+}
+
 .block-node:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
   transform: translateY(-2px);
 }
 
 .block-node.selected {
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-primary);
+  animation: selected-glow 2s ease-in-out infinite;
 }
 
 .block-node.dragging {
   opacity: 0.8;
   cursor: grabbing;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-  z-index: 1000;
+  box-shadow: var(--shadow-xl);
+  z-index: var(--z-dragging);
   transform: none !important;
+  pointer-events: none; /* 让拖拽的元素不阻挡鼠标事件，使事件能穿透到下面的插槽 */
 }
 
 /* ========== 积木头部 ========== */
@@ -38,28 +45,28 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--spacing-sm);
 }
 
 .block-node-label {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: #1f2937;
+  font-weight: var(--font-semibold);
+  font-size: var(--font-md);
+  color: var(--color-gray-800);
 }
 
 .block-node-delete {
   padding: 0.2rem;
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  color: #9ca3af;
-  transition: all 0.2s;
+  color: var(--color-gray-400);
+  transition: var(--transition-all);
 }
 
 .block-node-delete:hover {
-  background: #fee2e2;
-  color: #ef4444;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
 }
 
 /* ========== 参数显示 ========== */
@@ -71,18 +78,18 @@
 
 .param-display {
   display: flex;
-  gap: 0.5rem;
-  font-size: 0.85rem;
+  gap: var(--spacing-sm);
+  font-size: var(--font-sm);
 }
 
 .param-label {
-  color: #6b7280;
-  font-weight: 500;
+  color: var(--color-gray-500);
+  font-weight: var(--font-medium);
 }
 
 .param-value {
-  color: #1f2937;
-  font-weight: 600;
+  color: var(--color-gray-800);
+  font-weight: var(--font-semibold);
 }
 
 /* ========== 连接点 ========== */
@@ -95,23 +102,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 50%;
+  background: var(--bg-white);
+  border: var(--border-width-thick) solid var(--border-color);
+  border-radius: var(--radius-full);
   cursor: pointer;
-  transition: all 0.2s;
-  z-index: 10;
+  transition: var(--transition-all);
+  z-index: var(--z-dropdown);
 }
 
 .connection-point:hover {
   transform: translateX(-50%) scale(1.3);
-  border-color: #4f46e5;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.3);
 }
 
 .connection-point:active {
   transform: translateX(-50%) scale(1.15);
-  background: #4f46e5;
+  background: var(--color-primary);
 }
 
 .connection-input {
@@ -123,12 +130,12 @@
 }
 
 .connection-point svg {
-  stroke: #6b7280;
+  stroke: var(--color-gray-500);
   stroke-width: 1.5;
 }
 
 .connection-point:hover svg {
-  stroke: #4f46e5;
+  stroke: var(--color-primary);
 }
 
 /* ========== 顺序标记 ========== */
@@ -138,15 +145,70 @@
   right: -8px;
   width: 24px;
   height: 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 50%;
+  background: var(--gradient-purple);
+  color: var(--bg-white);
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
-  font-weight: bold;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  font-size: var(--font-xs);
+  font-weight: var(--font-bold);
+  box-shadow: var(--shadow-sm);
   z-index: 5;
+}
+
+/* ========== 容器型积木（C型）的样式 ========== */
+.block-slots {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.block-slot {
+  margin: 6px 0;
+}
+
+.slot-label {
+  font-size: 11px;
+  font-weight: var(--font-semibold);
+  color: var(--color-gray-500);
+  margin-bottom: 4px;
+  padding: 0 8px;
+}
+
+.slot-drop-zone {
+  min-height: 60px;
+  background: rgba(243, 244, 246, 0.8);
+  border: var(--border-width-thick) dashed var(--border-color-light);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  margin: 0 8px;
+  transition: var(--transition-all) ease;
+}
+
+.slot-drop-zone:hover {
+  background: rgba(243, 244, 246, 1);
+  border-color: var(--color-gray-400);
+}
+
+.slot-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  font-size: 12px;
+  color: var(--color-gray-400);
+  font-style: italic;
+  pointer-events: none; /* 让占位符不阻挡鼠标事件 */
+}
+
+.slot-children {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.slot-children .block-node {
+  margin: 0;
+  width: 100%;
 }
 
