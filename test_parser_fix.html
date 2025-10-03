@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代码解析器测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .code-input {
+            width: 100%;
+            height: 200px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .block-item {
+            background: #e8f5e9;
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 4px solid #4CAF50;
+            border-radius: 4px;
+        }
+        .block-type {
+            font-weight: bold;
+            color: #2e7d32;
+        }
+        .block-params {
+            margin-left: 20px;
+            color: #555;
+        }
+        .custom-code {
+            background: #ffebee;
+            border-left-color: #f44336;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 R代码解析器测试</h1>
+    
+    <div class="test-section">
+        <h2>测试代码：</h2>
+        <textarea class="code-input" id="testCode"># GGplotChim 生成的代码
+# 基于 ggplot2 的图层语法
+library(ggplot2)
+
+# 图层链 1
+print(ok)
+  +  print(good)
+  +  for (i in 1:10) {
+  print(data)
+}
+
+# 运行上述代码即可显示图表</textarea>
+        <button onclick="runTest()">🚀 解析代码</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>解析结果：</h2>
+        <div id="result" class="result">点击"解析代码"按钮开始测试...</div>
+    </div>
+
+    <script type="module">
+        import { parseRCodeToBlocks } from './src/utils/codeParser.ts';
+        
+        window.runTest = function() {
+            const code = document.getElementById('testCode').value;
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                const blocks = parseRCodeToBlocks(code);
+                
+                let html = `<div style="margin-bottom: 20px;">
+                    <strong>解析成功！</strong> 共生成 ${blocks.length} 个积木块
+                </div>`;
+                
+                blocks.forEach((block, index) => {
+                    const isCustomCode = block.blockType === 'CUSTOM_CODE';
+                    const className = isCustomCode ? 'block-item custom-code' : 'block-item';
+                    
+                    html += `<div class="${className}">
+                        <div class="block-type">
+                            ${index + 1}. ${block.blockType}
+                            ${isCustomCode ? '⚠️ (自定义代码块 - 不应该出现)' : '✅'}
+                        </div>
+                        <div class="block-params">
+                            参数: ${JSON.stringify(block.params, null, 2)}
+                        </div>
+                        <div class="block-params">
+                            位置: (${block.position.x}, ${block.position.y})
+                        </div>
+                    </div>`;
+                });
+                
+                // 统计
+                const customCodeCount = blocks.filter(b => b.blockType === 'CUSTOM_CODE').length;
+                const otherBlocksCount = blocks.length - customCodeCount;
+                
+                html += `<div style="margin-top: 20px; padding: 15px; background: ${customCodeCount > 0 ? '#ffebee' : '#e8f5e9'}; border-radius: 4px;">
+                    <strong>统计：</strong><br>
+                    ✅ 识别的积木块: ${otherBlocksCount}<br>
+                    ${customCodeCount > 0 ? `⚠️ 自定义代码块（应该避免）: ${customCodeCount}` : '🎉 没有自定义代码块！所有代码都被正确识别！'}
+                </div>`;
+                
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = `<div style="color: red;">
+                    <strong>解析错误：</strong><br>
+                    ${error.message}<br>
+                    <pre>${error.stack}</pre>
+                </div>`;
+            }
+        };
+    </script>
+</body>
+</html>
+

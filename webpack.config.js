@@ -47,7 +47,11 @@ module.exports = {
     },
     port: 3000,
     hot: true,
-    open: true
+    open: true,
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin'
+    }
   }
 };
 

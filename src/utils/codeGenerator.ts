@@ -105,11 +105,7 @@ export function generateRCode(blocks: BlockInstance[]): string {
   chains.forEach((chain, chainIndex) => {
     if (chainIndex > 0) {
       lines.push('');
-      lines.push('# -------------------');
-      lines.push('');
     }
-    
-    lines.push(`# 图层链 ${chainIndex + 1}`);
     
     // 按顺序生成每个积木的代码
     const chainCode: string[] = [];

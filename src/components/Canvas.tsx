@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { useBlockStore } from '../store/useBlockStore';
 import { BlockDefinition, BlockInstance } from '../types/blocks';
 import { blockDefinitions } from '../data/blockDefinitions';
@@ -12,7 +12,7 @@ const SNAP_DISTANCE = 50; // 自动吸附距离（像素）
 const BLOCK_HEIGHT = 80; // 积木的大致高度，用于计算连接点位置
 
 const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
-  const { blocks, addBlock, removeBlock, updateBlock, updateBlocks, setSelectedBlock, setGeneratedCode, selectedBlockIds, setSelectedBlocks, toggleBlockSelection, clearSelection } = useBlockStore();
+  const { blocks, addBlock, removeBlock, updateBlock, updateBlocks, setSelectedBlock, setGeneratedCode, selectedBlockIds, setSelectedBlocks, toggleBlockSelection, clearSelection, setSyncSource } = useBlockStore();
   const [draggingBlockId, setDraggingBlockId] = useState<string | null>(null);
   const [nearestSnapTarget, setNearestSnapTarget] = useState<{ blockId: string; type: 'input' | 'output' } | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
@@ -28,14 +28,48 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
   const [selectionEnd, setSelectionEnd] = useState<{ x: number; y: number } | null>(null);
   const [hasDragged, setHasDragged] = useState(false);
   
+  // 连接线渲染状态 - 存储计算好的连接线 JSX 元素
+  const [connectionElements, setConnectionElements] = useState<JSX.Element[]>([]);
+  
   // 拖拽到插槽的视觉反馈
   const [dropTarget, setDropTarget] = useState<{ containerId: string; slotName: string; insertIndex: number } | null>(null);
   
   // 更新生成的代码
   useEffect(() => {
+    const { syncSource } = useBlockStore.getState();
+    
+    // 如果同步源是代码编辑器，不重新生成代码（避免覆盖用户编辑）
+    if (syncSource === 'code') {
+      // 重置同步源，为下次更新做准备
+      const timer = setTimeout(() => {
+        setSyncSource(null);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+    
+    // 标记同步源为积木块，防止代码编辑器反向同步
+    setSyncSource('blocks');
     const code = generateRCode(blocks);
     setGeneratedCode(code);
-  }, [blocks, setGeneratedCode]);
+    
+    // 短暂延迟后重置同步源
+    const timer = setTimeout(() => {
+      setSyncSource(null);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [blocks, setGeneratedCode, setSyncSource]);
+  
+  // 在 DOM 更新后重新计算连接线
+  useLayoutEffect(() => {
+    // 使用 requestAnimationFrame 确保在浏览器下一帧绘制之前执行
+    const rafId = requestAnimationFrame(() => {
+      const newConnections = renderConnections();
+      setConnectionElements(newConnections);
+    });
+    
+    return () => cancelAnimationFrame(rafId);
+  }, [blocks, draggingBlockId]); // 当积木或拖拽状态变化时重新计算
   
   // 从积木板拖入积木 - 立即创建积木实例
   const handleBlockDragStart = useCallback((definition: BlockDefinition, e: React.MouseEvent) => {
@@ -937,60 +971,138 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
     const block = blocks.find(b => b.id === blockId);
     if (!block) return null;
     
-    const blockElement = document.querySelector(`[data-block-id="${blockId}"]`) as HTMLElement;
-    if (!blockElement) return null;
+    // 找到积木的实际 .block-node 元素（更精确的选择）
+    // 直接找到所有的 .block-node 元素，通过 data-block-id 过滤
+    const allBlockNodes = document.querySelectorAll('.block-node');
+    let blockElement: HTMLElement | null = null;
+    
+    // 遍历所有 .block-node 元素，找到 data-block-id 匹配的那个
+    for (let i = 0; i < allBlockNodes.length; i++) {
+      const element = allBlockNodes[i] as HTMLElement;
+      if (element.getAttribute('data-block-id') === blockId) {
+        blockElement = element;
+        break;
+      }
+    }
+    
+    if (!blockElement) {
+      // 检查这个积木是否应该被渲染
+      const shouldBeRendered = !block.parentId; // 只有顶层积木会被 Canvas 渲染
+      console.warn(`无法找到积木元素: ${blockId}`, {
+        blockData: block,
+        shouldBeRendered,
+        parentId: block.parentId,
+        hasOutputConnection: !!block.connections.output,
+        totalBlockNodesInDOM: allBlockNodes.length,
+        allBlockIdsInDOM: Array.from(allBlockNodes).map(el => (el as HTMLElement).getAttribute('data-block-id')).slice(0, 20) // 只显示前20个避免日志过长
+      });
+      return null;
+    }
     
     const canvas = document.querySelector('.canvas-content') as HTMLElement;
     if (!canvas) return null;
     
+    // 检查元素是否可见（可能被折叠或隐藏）
     const blockRect = blockElement.getBoundingClientRect();
-    const canvasRect = canvas.getBoundingClientRect();
     
-    // 获取画布的当前变换（缩放和平移）
-    const transform = canvas.style.transform;
-    let scale = 1;
-    let translateX = 0;
-    let translateY = 0;
-    
-    if (transform) {
-      const scaleMatch = transform.match(/scale\(([\d.]+)\)/);
-      const translateMatch = transform.match(/translate\(([-\d.]+)px,\s*([-\d.]+)px\)/);
-      
-      if (scaleMatch) scale = parseFloat(scaleMatch[1]);
-      if (translateMatch) {
-        translateX = parseFloat(translateMatch[1]);
-        translateY = parseFloat(translateMatch[2]);
-      }
+    // 如果元素的宽高为 0，可能是被隐藏了
+    if (blockRect.width === 0 || blockRect.height === 0) {
+      console.warn(`积木元素被隐藏或折叠: ${blockId}`, blockRect);
+      // 尝试使用备用方案：从父元素或位置数据估算
+      return null;
     }
     
-    // 计算相对于画布的位置（考虑变换）
-    const relativeX = (blockRect.left - canvasRect.left - translateX) / scale;
-    const relativeY = (blockRect.top - canvasRect.top - translateY) / scale;
+    const canvasRect = canvas.getBoundingClientRect();
+    
+    // 获取画布的滚动位置
+    const scrollLeft = canvas.scrollLeft;
+    const scrollTop = canvas.scrollTop;
+    
+    // 计算相对于画布内容区的位置（考虑滚动）
+    const relativeX = blockRect.left - canvasRect.left + scrollLeft;
+    const relativeY = blockRect.top - canvasRect.top + scrollTop;
     
     if (type === 'input') {
       // 输入点在积木顶部中心
       return {
-        x: relativeX + blockRect.width / (2 * scale),
+        x: relativeX + blockRect.width / 2,
         y: relativeY
       };
     } else {
       // 输出点在积木底部中心
       return {
-        x: relativeX + blockRect.width / (2 * scale),
-        y: relativeY + blockRect.height / scale
+        x: relativeX + blockRect.width / 2,
+        y: relativeY + blockRect.height
       };
     }
   };
   
+  // 计算SVG画布所需的最小尺寸
+  const calculateCanvasSize = (): { width: number; height: number } => {
+    const canvasContent = document.querySelector('.canvas-content') as HTMLElement;
+    if (!canvasContent) return { width: 2000, height: 2000 };
+
+    // 获取所有积木元素的边界
+    const allBlockNodes = document.querySelectorAll('.block-node');
+    let maxX = canvasContent.clientWidth;
+    let maxY = canvasContent.clientHeight;
+
+    allBlockNodes.forEach(node => {
+      const rect = (node as HTMLElement).getBoundingClientRect();
+      const canvasRect = canvasContent.getBoundingClientRect();
+      const scrollLeft = canvasContent.scrollLeft;
+      const scrollTop = canvasContent.scrollTop;
+
+      const relativeX = rect.left - canvasRect.left + scrollLeft + rect.width;
+      const relativeY = rect.top - canvasRect.top + scrollTop + rect.height;
+
+      maxX = Math.max(maxX, relativeX);
+      maxY = Math.max(maxY, relativeY);
+    });
+
+    // 添加一些额外的空间
+    return { 
+      width: Math.max(maxX + 200, canvasContent.clientWidth), 
+      height: Math.max(maxY + 200, canvasContent.clientHeight) 
+    };
+  };
+
   // 绘制连接线
   const renderConnections = () => {
     const connections: JSX.Element[] = [];
+
+    // DEBUG: 检查所有积木的渲染状态
+    const topLevelBlocks = blocks.filter(b => !b.parentId);
+    const childBlocks = blocks.filter(b => b.parentId);
+    const allDOMBlockIds = Array.from(document.querySelectorAll('.block-node'))
+      .map(el => (el as HTMLElement).getAttribute('data-block-id'))
+      .filter(id => id !== null);
+
+    // 找出应该被渲染但在 DOM 中找不到的积木
+    const missingBlocks = topLevelBlocks.filter(b => !allDOMBlockIds.includes(b.id));
+
+    if (missingBlocks.length > 0 || childBlocks.length > 0) {
+      console.log('[Canvas] 积木渲染统计:', {
+        totalBlocks: blocks.length,
+        topLevelBlocks: topLevelBlocks.length,
+        topLevelBlockIds: topLevelBlocks.map(b => b.id),
+        domBlockCount: allDOMBlockIds.length,
+        missingBlocksCount: missingBlocks.length,
+        missingBlockIds: missingBlocks.map(b => b.id),
+        childBlocks: childBlocks.length,
+        childBlockIds: childBlocks.map(b => b.id),
+        childBlockParents: childBlocks.map(b => ({ id: b.id, parentId: b.parentId }))
+      });
+    }
     
     // 渲染现有连接
     blocks.forEach(block => {
       if (block.connections.output) {
         const targetBlock = blocks.find(b => b.id === block.connections.output);
-        if (!targetBlock) return;
+        if (!targetBlock) {
+          console.warn(`连接目标积木不存在: ${block.connections.output}`);
+          return;
+        }
         
         const definition = blockDefinitions.find(d => d.type === block.blockType);
         const color = definition?.color || '#666';
@@ -998,23 +1110,41 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
         // 获取实际的连接点位置
         const startPoint = getConnectionPoint(block.id, 'output');
         const endPoint = getConnectionPoint(targetBlock.id, 'input');
-        
-        if (!startPoint || !endPoint) return;
-        
+
+        if (!startPoint || !endPoint) {
+          console.warn(`无法获取连接点位置:`, {
+            sourceBlock: block.id,
+            targetBlock: targetBlock.id,
+            startPoint,
+            endPoint,
+            sourceParentId: block.parentId,
+            targetParentId: targetBlock.parentId
+          });
+          return;
+        }
+
         const startX = startPoint.x;
         const startY = startPoint.y;
         const endX = endPoint.x;
         const endY = endPoint.y;
-        
+
+        // DEBUG: 输出连接点位置
+        console.log(`[Connection] ${block.id} -> ${targetBlock.id}:`, {
+          start: { x: startX, y: startY },
+          end: { x: endX, y: endY },
+          sourceParent: block.parentId,
+          targetParent: targetBlock.parentId
+        });
+
         // 计算贝塞尔曲线的控制点
         const controlOffset = Math.abs(endY - startY) * 0.5;
         const cp1X = startX;
         const cp1Y = startY + controlOffset;
         const cp2X = endX;
         const cp2Y = endY - controlOffset;
-        
+
         const pathD = `M ${startX} ${startY} C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${endX} ${endY}`;
-        
+
         connections.push(
           <path
             key={`${block.id}-${block.connections.output}`}
@@ -1227,8 +1357,19 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
             })}
             
             {/* SVG 层用于绘制连接线, 置于顶层 */}
-            <svg className="connection-layer" style={{ zIndex: 10 }}>
-              {renderConnections()}
+            <svg 
+              className="connection-layer" 
+              style={{ 
+                zIndex: 10,
+                width: `${calculateCanvasSize().width}px`,
+                height: `${calculateCanvasSize().height}px`,
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                pointerEvents: 'none'
+              }}
+            >
+              {connectionElements}
             </svg>
 
             {/* 绘制选择框 - 只在拖拽时显示 */}

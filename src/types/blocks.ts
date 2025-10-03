@@ -22,6 +22,7 @@ export enum BlockType {
   IF_STATEMENT = 'if_statement',
   FUNCTION_CALL = 'function_call',
   COMMENT = 'comment',
+  CUSTOM_CODE = 'custom_code', // 自定义代码块（用于存储无法识别的代码）
   
   // 1. 数据相关
   DATA_IMPORT = 'data_import',

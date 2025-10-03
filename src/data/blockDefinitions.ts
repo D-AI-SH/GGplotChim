@@ -173,6 +173,25 @@ export const blockDefinitions: BlockDefinition[] = [
     rTemplate: '# {{text}}'
   },
   
+  {
+    id: 'custom_code',
+    type: BlockType.CUSTOM_CODE,
+    category: BlockCategory.BASE,
+    label: '自定义代码',
+    description: '自定义R代码片段',
+    color: '#94a3b8',
+    params: [
+      {
+        name: 'code',
+        type: 'text',
+        label: '代码内容',
+        defaultValue: '',
+        required: true
+      }
+    ],
+    rTemplate: '{{code}}'
+  },
+  
   // ========== 1. 数据层 (Data) ==========
   {
     id: 'data_import',

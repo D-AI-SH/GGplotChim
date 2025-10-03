@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>连接关系测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .code-input {
+            width: 100%;
+            height: 300px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .block-item {
+            background: #e8f5e9;
+            padding: 12px;
+            margin: 8px 0;
+            border-left: 4px solid #4CAF50;
+            border-radius: 4px;
+        }
+        .connection-info {
+            margin-left: 20px;
+            color: #1976d2;
+            font-weight: bold;
+        }
+        .connection-valid {
+            color: #4CAF50;
+        }
+        .connection-invalid {
+            color: #f44336;
+        }
+        .position-info {
+            margin-left: 20px;
+            color: #666;
+            font-size: 11px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .stats {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+        .canvas-preview {
+            position: relative;
+            background: #fafafa;
+            border: 2px dashed #ccc;
+            min-height: 400px;
+            margin-top: 15px;
+            overflow: auto;
+        }
+        .block-visual {
+            position: absolute;
+            background: #4CAF50;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            min-width: 180px;
+        }
+        .connection-line {
+            position: absolute;
+            height: 2px;
+            background: #2196F3;
+            transform-origin: left center;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔗 积木连接关系测试</h1>
+    
+    <div class="container">
+        <div class="section">
+            <h2>测试代码</h2>
+            <textarea class="code-input" id="testCode"># 测试代码
+library(ggplot2)
+
+# 测试1: ggplot链
+ggplot(iris)
+  + aes(x = Sepal.Length, y = Sepal.Width)
+  + geom_point()
+  + theme_minimal()
+
+# 测试2: 独立语句
+print(data)
+print(summary)
+
+# 测试3: 另一个ggplot链
+ggplot(mtcars) + geom_bar(aes(x = cyl))</textarea>
+            <button onclick="runTest()">🚀 解析并测试</button>
+        </div>
+        
+        <div class="section">
+            <h2>解析结果</h2>
+            <div id="result" class="result">等待解析...</div>
+        </div>
+    </div>
+    
+    <div class="section" style="margin-top: 20px;">
+        <h2>可视化预览</h2>
+        <div id="canvas" class="canvas-preview"></div>
+    </div>
+
+    <script type="module">
+        import { parseRCodeToBlocks, validateParsedBlocks } from './src/utils/codeParser.ts';
+        
+        window.runTest = function() {
+            const code = document.getElementById('testCode').value;
+            const resultDiv = document.getElementById('result');
+            const canvasDiv = document.getElementById('canvas');
+            
+            try {
+                const blocks = parseRCodeToBlocks(code);
+                const validation = validateParsedBlocks(blocks);
+                
+                let html = `<div class="stats">
+                    <strong>📊 统计信息</strong><br>
+                    积木总数: ${blocks.length}<br>
+                    验证结果: ${validation.valid ? '✅ 有效' : '❌ 无效'}<br>
+                    ${validation.errors.length > 0 ? `错误: ${validation.errors.join(', ')}` : ''}
+                </div>`;
+                
+                // 统计连接数
+                let connectedBlocks = 0;
+                let chainCount = 0;
+                let isolatedBlocks = 0;
+                
+                blocks.forEach(block => {
+                    if (block.connections.input || block.connections.output) {
+                        connectedBlocks++;
+                    } else {
+                        isolatedBlocks++;
+                    }
+                    if (!block.connections.input) {
+                        chainCount++;
+                    }
+                });
+                
+                html += `<div class="stats" style="margin-top: 10px;">
+                    <strong>🔗 连接统计</strong><br>
+                    有连接的积木: ${connectedBlocks}<br>
+                    独立积木: ${isolatedBlocks}<br>
+                    链的数量: ${chainCount}
+                </div>`;
+                
+                // 显示每个积木的详细信息
+                blocks.forEach((block, index) => {
+                    const hasInput = block.connections.input !== null;
+                    const hasOutput = block.connections.output !== null;
+                    const inputValid = !hasInput || blocks.find(b => b.id === block.connections.input);
+                    const outputValid = !hasOutput || blocks.find(b => b.id === block.connections.output);
+                    
+                    html += `<div class="block-item">
+                        <strong>${index + 1}. ${block.blockType}</strong> (ID: ${block.id})<br>
+                        <div class="position-info">
+                            位置: (${block.position.x}, ${block.position.y}) | Order: ${block.order}
+                        </div>
+                        <div class="connection-info ${inputValid && outputValid ? 'connection-valid' : 'connection-invalid'}">
+                            ⬇️ 输入: ${hasInput ? block.connections.input : '无'} ${inputValid ? '✅' : '❌'}<br>
+                            ⬆️ 输出: ${hasOutput ? block.connections.output : '无'} ${outputValid ? '✅' : '❌'}
+                        </div>
+                        <div class="position-info">
+                            参数: ${JSON.stringify(block.params)}
+                        </div>
+                    </div>`;
+                });
+                
+                resultDiv.innerHTML = html;
+                
+                // 绘制可视化
+                canvasDiv.innerHTML = '';
+                canvasDiv.style.height = `${Math.max(600, blocks.reduce((max, b) => Math.max(max, b.position.y + 100), 0))}px`;
+                
+                blocks.forEach(block => {
+                    const blockDiv = document.createElement('div');
+                    blockDiv.className = 'block-visual';
+                    blockDiv.style.left = `${block.position.x}px`;
+                    blockDiv.style.top = `${block.position.y}px`;
+                    blockDiv.innerHTML = `
+                        <div>${block.blockType}</div>
+                        <div style="font-size: 9px; opacity: 0.8;">${block.id}</div>
+                    `;
+                    canvasDiv.appendChild(blockDiv);
+                    
+                    // 绘制连接线
+                    if (block.connections.output) {
+                        const targetBlock = blocks.find(b => b.id === block.connections.output);
+                        if (targetBlock) {
+                            const line = document.createElement('div');
+                            line.className = 'connection-line';
+                            const x1 = block.position.x + 90;
+                            const y1 = block.position.y + 40;
+                            const x2 = targetBlock.position.x + 90;
+                            const y2 = targetBlock.position.y;
+                            
+                            const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                            const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+                            
+                            line.style.left = `${x1}px`;
+                            line.style.top = `${y1}px`;
+                            line.style.width = `${length}px`;
+                            line.style.transform = `rotate(${angle}deg)`;
+                            
+                            canvasDiv.appendChild(line);
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div style="color: red;">
+                    <strong>❌ 解析错误：</strong><br>
+                    ${error.message}<br>
+                    <pre>${error.stack}</pre>
+                </div>`;
+            }
+        };
+        
+        // 自动运行一次
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(runTest, 100);
+        });
+    </script>
+</body>
+</html>
+

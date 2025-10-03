@@ -183,6 +183,8 @@
   padding: 8px;
   margin: 0 8px;
   transition: var(--transition-all) ease;
+  /* 确保插槽内容可见，不使用 max-height 和 overflow: hidden */
+  /* 如果内容太多，整个容器会变高，而不是隐藏内容 */
 }
 
 .slot-drop-zone:hover {
@@ -205,6 +207,8 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  /* 不设置 max-height 和 overflow，确保所有子元素都可见 */
+  /* 这样连接线才能正确计算位置 */
 }
 
 .slot-children .block-node {

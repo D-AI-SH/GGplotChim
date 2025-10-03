@@ -8,16 +8,24 @@
     "build": "webpack --mode production",
     "dev": "webpack serve --mode development"
   },
-  "keywords": ["react", "ggplot2", "r", "visualization", "blockly", "drag-and-drop"],
+  "keywords": [
+    "react",
+    "ggplot2",
+    "r",
+    "visualization",
+    "blockly",
+    "drag-and-drop"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@monaco-editor/react": "^4.6.0",
+    "lucide-react": "^0.292.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "reactflow": "^11.10.4",
-    "@monaco-editor/react": "^4.6.0",
-    "zustand": "^4.4.7",
-    "lucide-react": "^0.292.0"
+    "webr": "^0.5.6",
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
     "@babel/core": "^7.23.0",
@@ -30,11 +38,10 @@
     "css-loader": "^6.8.1",
     "html-webpack-plugin": "^5.5.3",
     "style-loader": "^3.3.3",
-    "typescript": "^5.3.0",
     "ts-loader": "^9.5.1",
+    "typescript": "^5.3.0",
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^4.15.1"
   }
 }
-

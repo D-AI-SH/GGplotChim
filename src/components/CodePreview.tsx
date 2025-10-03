@@ -1,18 +1,28 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import { useBlockStore } from '../store/useBlockStore';
-import { Copy, Download } from 'lucide-react';
+import { Copy, Download, Lock, Unlock, RefreshCw } from 'lucide-react';
 
 const CodePreview: React.FC = () => {
-  const { generatedCode } = useBlockStore();
+  const { generatedCode, updateCodeAndSync, syncSource } = useBlockStore();
+  const [isEditable, setIsEditable] = useState(false);
+  const [localCode, setLocalCode] = useState(generatedCode);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // 当生成的代码更新时，同步到本地代码（仅在非用户编辑时）
+  useEffect(() => {
+    if (syncSource !== 'code') {
+      setLocalCode(generatedCode);
+    }
+  }, [generatedCode, syncSource]);
   
   const handleCopy = () => {
-    navigator.clipboard.writeText(generatedCode);
+    navigator.clipboard.writeText(localCode);
     alert('代码已复制到剪贴板！');
   };
   
   const handleDownload = () => {
-    const blob = new Blob([generatedCode], { type: 'text/plain' });
+    const blob = new Blob([localCode], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -21,9 +31,61 @@ const CodePreview: React.FC = () => {
     URL.revokeObjectURL(url);
   };
   
+  const toggleEditable = () => {
+    setIsEditable(!isEditable);
+    if (!isEditable) {
+      // 切换到可编辑模式时，同步当前代码
+      setLocalCode(generatedCode);
+    }
+  };
+  
+  const handleCodeChange = (value: string | undefined) => {
+    if (!value) return;
+    
+    setLocalCode(value);
+    
+    // 防抖：用户停止输入500ms后才同步到积木
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    debounceTimerRef.current = setTimeout(() => {
+      if (isEditable) {
+        updateCodeAndSync(value);
+      }
+    }, 500);
+  };
+  
+  const handleSyncNow = () => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    updateCodeAndSync(localCode);
+  };
+  
   return (
     <div className="code-preview">
       <div className="code-actions">
+        <button 
+          className={`action-btn ${isEditable ? 'active' : ''}`} 
+          onClick={toggleEditable} 
+          title={isEditable ? '锁定代码（只读）' : '解锁代码（可编辑）'}
+        >
+          {isEditable ? <Unlock size={16} /> : <Lock size={16} />}
+          {isEditable ? '可编辑' : '只读'}
+        </button>
+        
+        {isEditable && (
+          <button 
+            className="action-btn sync-btn" 
+            onClick={handleSyncNow} 
+            title="立即同步到积木块"
+          >
+            <RefreshCw size={16} />
+            同步
+          </button>
+        )}
+        
         <button className="action-btn" onClick={handleCopy} title="复制代码">
           <Copy size={16} />
           复制
@@ -38,18 +100,28 @@ const CodePreview: React.FC = () => {
         <Editor
           height="100%"
           defaultLanguage="r"
-          value={generatedCode}
+          value={localCode}
           theme="vs-dark"
+          onChange={handleCodeChange}
           options={{
-            readOnly: true,
+            readOnly: !isEditable,
             minimap: { enabled: false },
             fontSize: 14,
             lineNumbers: 'on',
             scrollBeyondLastLine: false,
-            automaticLayout: true
+            automaticLayout: true,
+            wordWrap: 'on',
+            tabSize: 2
           }}
         />
       </div>
+      
+      {isEditable && (
+        <div className="code-sync-hint">
+          <span className="hint-icon">💡</span>
+          <span>编辑代码后会自动同步到左侧积木块（延迟500ms），或点击"同步"按钮立即同步</span>
+        </div>
+      )}
     </div>
   );
 };
