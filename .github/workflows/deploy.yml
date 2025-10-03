@@ -7,19 +7,12 @@ on:
   # 允许手动触发
   workflow_dispatch:
 
-# 设置 GitHub Pages 部署权限
+# 设置权限，允许推送到 gh-pages 分支
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# 只允许一个并发部署
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  contents: write
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     
     steps:
