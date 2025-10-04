@@ -31,42 +31,64 @@ function renderTemplate(template: string, params: Record<string, any>, childrenC
   // ⚠️ 重要：必须先处理条件语句，再处理变量替换
   // 否则条件语句中的变量会被提前替换，导致条件判断失效
   
-  // 处理条件语句 {{#if variable}}...{{/if}}
-  // 支持嵌套属性访问，如 {{#if children.else.length}}
-  // 使用 gs 标志支持多行和贪婪匹配
-  result = result.replace(/\{\{#if\s+([\w.]+)\}\}(.*?)\{\{\/if\}\}/gs, (match, keyPath, content) => {
-    console.log(`🔍 [renderTemplate] 处理条件: {{#if ${keyPath}}}`);
-    console.log(`🔍 [renderTemplate] 条件内容: ${content}`);
+  // 🔧 处理嵌套条件语句的辅助函数（递归处理，从内向外）
+  const processConditionals = (text: string, depth: number = 0): string => {
+    const indent = '  '.repeat(depth);
+    let hasNestedIf = false;
     
-    // 支持嵌套属性访问（如 children.else.length）
-    let value: any;
-    if (keyPath.includes('.')) {
-      const keys = keyPath.split('.');
-      value = keys.reduce((obj: any, key: string) => obj?.[key], { ...params, children: childrenCode });
-    } else {
-      value = params[keyPath];
+    // 检查是否还有嵌套的 {{#if}}
+    const nestedIfCount = (text.match(/\{\{#if/g) || []).length;
+    if (nestedIfCount > 0) {
+      console.log(`${indent}🔍 [renderTemplate] 深度 ${depth}: 发现 ${nestedIfCount} 个条件语句`);
+      hasNestedIf = true;
     }
     
-    console.log(`🔍 [renderTemplate] 条件值: ${JSON.stringify(value)}`);
+    // 使用非贪婪匹配，找到最内层的 {{#if}}...{{/if}}
+    const processed = text.replace(/\{\{#if\s+([\w.]+)\}\}((?:(?!\{\{#if)(?!\{\{\/if\}\}).)*)\{\{\/if\}\}/gs, (match, keyPath, content) => {
+      console.log(`${indent}🔍 [renderTemplate] 深度 ${depth}: 处理条件 {{#if ${keyPath}}}`);
+      console.log(`${indent}🔍 [renderTemplate] 条件内容: ${JSON.stringify(content)}`);
+      
+      // 支持嵌套属性访问（如 children.else.length）
+      let value: any;
+      if (keyPath.includes('.')) {
+        const keys = keyPath.split('.');
+        value = keys.reduce((obj: any, key: string) => obj?.[key], { ...params, children: childrenCode });
+      } else {
+        value = params[keyPath];
+      }
+      
+      console.log(`${indent}🔍 [renderTemplate] 条件值: ${JSON.stringify(value)}`);
+      
+      // 对于数组类型，检查是否有非空元素
+      let shouldInclude: boolean;
+      if (Array.isArray(value)) {
+        const nonEmptyElements = value.filter(v => v !== '' && v !== null && v !== undefined);
+        shouldInclude = nonEmptyElements.length > 0;
+        console.log(`${indent}🔍 [renderTemplate] 数组条件：原始长度=${value.length}, 非空元素=${nonEmptyElements.length}`);
+      } else if (typeof value === 'number') {
+        // 对于数字类型（如 length），判断是否 > 0
+        shouldInclude = value > 0;
+        console.log(`${indent}🔍 [renderTemplate] 数字条件：值=${value}, 结果=${shouldInclude}`);
+      } else {
+        shouldInclude = value !== undefined && value !== null && value !== '' && value !== false;
+      }
+      
+      const result = shouldInclude ? content : '';
+      console.log(`${indent}🔍 [renderTemplate] 条件结果 (${shouldInclude ? '真' : '假'}): ${JSON.stringify(result)}`);
+      return result;
+    });
     
-    // 对于数组类型，检查是否有非空元素
-    let shouldInclude: boolean;
-    if (Array.isArray(value)) {
-      const nonEmptyElements = value.filter(v => v !== '' && v !== null && v !== undefined);
-      shouldInclude = nonEmptyElements.length > 0;
-      console.log(`🔍 [renderTemplate] 数组条件：原始长度=${value.length}, 非空元素=${nonEmptyElements.length}`);
-    } else if (typeof value === 'number') {
-      // 对于数字类型（如 length），判断是否 > 0
-      shouldInclude = value > 0;
-      console.log(`🔍 [renderTemplate] 数字条件：值=${value}, 结果=${shouldInclude}`);
-    } else {
-      shouldInclude = value !== undefined && value !== null && value !== '' && value !== false;
+    // 如果还有嵌套的条件语句，继续递归处理
+    if (hasNestedIf && processed !== text) {
+      console.log(`${indent}🔁 [renderTemplate] 深度 ${depth}: 递归处理更外层的条件`);
+      return processConditionals(processed, depth + 1);
     }
     
-    const result = shouldInclude ? content : '';
-    console.log(`🔍 [renderTemplate] 条件结果 (${shouldInclude ? '真' : '假'}): ${result}`);
-    return result;
-  });
+    return processed;
+  };
+  
+  // 递归处理所有条件语句（从内向外）
+  result = processConditionals(result);
   
   // 替换简单变量 {{variable}}
   result = result.replace(/\{\{(\w+)\}\}/g, (match, key) => {
@@ -290,10 +312,19 @@ export function generateRCode(blocks: BlockInstance[]): string {
         // 输出 ggplot 链，使用 + 连接，过滤掉空代码
         const nonEmptyChainCode = chainCode.filter(code => code.trim());
         console.log('✅ [CodeGen] 生成 ggplot 链，共', nonEmptyChainCode.length, '个积木（过滤后）');
+        console.log(`🔍 [CodeGen] 当前积木 ${current.id} 的 assignedTo:`, current.assignedTo);
         if (nonEmptyChainCode.length > 0) {
-          lines.push(nonEmptyChainCode[0]);
+          // 检查是否有变量赋值
+          const assignment = current.assignedTo ? `${current.assignedTo} <- ` : '';
+          console.log(`📝 [CodeGen] 变量赋值前缀: "${assignment}"`);
+          // 第一行不加 +（可能有变量赋值）
+          const firstLine = `${assignment}${nonEmptyChainCode[0]}${nonEmptyChainCode.length > 1 ? ' +' : ''}`;
+          console.log(`📝 [CodeGen] 第一行代码: ${firstLine}`);
+          lines.push(firstLine);
+          // 后续行加缩进和 +
           for (let i = 1; i < nonEmptyChainCode.length; i++) {
-            lines.push(`  + ${nonEmptyChainCode[i]}`);
+            const isLast = i === nonEmptyChainCode.length - 1;
+            lines.push(`  ${nonEmptyChainCode[i]}${isLast ? '' : ' +'}`);
           }
         }
       } else {
@@ -322,7 +353,16 @@ export function generateRCode(blocks: BlockInstance[]): string {
   
   lines.push('');
   
-  return lines.join('\n');
+  // 清理生成的代码：移除多余的逗号和空格
+  const cleanedLines = lines.map(line => {
+    // 移除函数调用中的尾随逗号: func(arg, ) -> func(arg)
+    line = line.replace(/,\s*\)/g, ')');
+    // 移除空括号前的逗号: func(, ) -> func()
+    line = line.replace(/\(\s*,\s*/g, '(');
+    return line;
+  });
+  
+  return cleanedLines.join('\n');
 }
 
 // 验证代码是否有效

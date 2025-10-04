@@ -144,6 +144,7 @@ export interface BlockInstance {
   children?: Record<string, string[]>; // 容器型积木的子积木 {slotName: [childBlockId1, childBlockId2, ...]}
   parentId?: string | null; // 父容器积木 ID（如果在容器内）
   slotName?: string; // 所在的插槽名称
+  assignedTo?: string; // 变量赋值名称（如 p <- ggplot(...) 中的 "p"）
 }
 
 export interface DataColumn {

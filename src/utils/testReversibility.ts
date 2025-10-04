@@ -15,10 +15,13 @@ import { parseRCodeToBlocksWithAST } from './astCodeParser';
  * 1. 移除注释
  * 2. 移除空行
  * 3. 统一空格
- * 4. 移除首尾空格
+ * 4. 统一运算符周围的空格
+ * 5. 移除首尾空格
+ * 6. 将常见函数的位置参数转换为命名参数（规范化形式）
+ * 7. 统一 ggplot2 管道操作符的换行（合并为单行）
  */
 export function normalizeRCode(code: string): string {
-  return code
+  let normalized = code
     .split('\n')
     .map(line => line.trim())
     // 过滤注释和空行
@@ -29,7 +32,195 @@ export function normalizeRCode(code: string): string {
     })
     // 统一空格
     .map(line => line.replace(/\s+/g, ' '))
+    // 统一运算符周围的空格：确保 = 周围有空格
+    .map(line => {
+      // 在赋值和参数中添加空格：x=y → x = y
+      // 但要避免处理字符串内部和注释
+      return line
+        .replace(/([a-zA-Z0-9_.])\s*=\s*([a-zA-Z0-9_."(])/g, '$1 = $2')
+        .replace(/,\s*/g, ', '); // 逗号后统一加空格
+    })
     .join('\n');
+  
+  // 合并 ggplot2 管道操作符的多行为单行
+  normalized = mergeGgplotPipeLines(normalized);
+  
+  // 规范化常见函数的参数形式
+  normalized = normalizeFunctionCalls(normalized);
+  
+  return normalized;
+}
+
+/**
+ * 合并 ggplot2 的管道操作符行
+ * 将跨行的 ggplot 链式调用合并为单行
+ * 
+ * 例如：
+ * p <- ggplot(data, aes(x = x)) +
+ *   geom_point() +
+ *   theme_minimal()
+ * 
+ * 变为：
+ * p <- ggplot(data, aes(x = x)) + geom_point() + theme_minimal()
+ */
+function mergeGgplotPipeLines(code: string): string {
+  const lines = code.split('\n');
+  const result: string[] = [];
+  let currentLine = '';
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    if (currentLine) {
+      // 如果前一行以 + 或 %>% 结尾，合并当前行
+      currentLine += ' ' + line;
+    } else {
+      currentLine = line;
+    }
+    
+    // 检查当前行是否以管道操作符结尾
+    if (currentLine.endsWith('+') || currentLine.endsWith('%>%')) {
+      // 继续合并下一行
+      continue;
+    } else {
+      // 完整的语句，添加到结果
+      if (currentLine) {
+        result.push(currentLine);
+      }
+      currentLine = '';
+    }
+  }
+  
+  // 添加最后一行（如果有）
+  if (currentLine) {
+    result.push(currentLine);
+  }
+  
+  return result.join('\n');
+}
+
+/**
+ * 规范化函数调用的参数
+ * 将位置参数转换为命名参数（针对我们支持的常见函数）
+ */
+function normalizeFunctionCalls(code: string): string {
+  // 规范化 ggsave 函数
+  // 可能的形式：
+  // 1. ggsave(p, "output.png") - 两个位置参数
+  // 2. ggsave(p, file = "output.png") - 混合参数
+  // 3. ggsave(plot = p, file = "output.png") - 全命名参数
+  // 4. ggsave("output.png") - 单个位置参数
+  // 目标: 统一为全命名参数形式
+  
+  code = code.replace(
+    /ggsave\(([^)]+)\)/g,
+    (match, argsStr) => {
+      // 解析所有参数
+      const args = parseArguments(argsStr);
+      
+      if (args.length === 0) {
+        return match;
+      }
+      
+      // 规范化参数
+      const normalizedArgs: string[] = [];
+      
+      for (let i = 0; i < args.length; i++) {
+        const arg = args[i].trim();
+        
+        // 如果已经是命名参数，保持原样
+        if (arg.includes('=')) {
+          normalizedArgs.push(arg);
+          continue;
+        }
+        
+        // 位置参数需要转换为命名参数
+        if (i === 0) {
+          // 第一个位置参数：判断是 plot 还是 filename
+          const isPlot = !arg.startsWith('"') && !arg.startsWith("'");
+          if (isPlot) {
+            normalizedArgs.push(`plot = ${arg}`);
+          } else {
+            normalizedArgs.push(`file = ${arg}`);
+          }
+        } else if (i === 1) {
+          // 第二个位置参数：通常是 file
+          normalizedArgs.push(`file = ${arg}`);
+        } else {
+          // 其他位置参数保持原样（不太常见）
+          normalizedArgs.push(arg);
+        }
+      }
+      
+      return `ggsave(${normalizedArgs.join(', ')})`;
+    }
+  );
+  
+  return code;
+}
+
+/**
+ * 解析函数参数列表（简单版本，处理逗号分隔的参数）
+ * 注意：需要处理嵌套括号和引号
+ */
+function parseArguments(argsStr: string): string[] {
+  const args: string[] = [];
+  let currentArg = '';
+  let depth = 0;
+  let inString = false;
+  let stringChar = '';
+  
+  for (let i = 0; i < argsStr.length; i++) {
+    const char = argsStr[i];
+    const prevChar = i > 0 ? argsStr[i - 1] : '';
+    
+    // 处理字符串
+    if ((char === '"' || char === "'") && prevChar !== '\\') {
+      if (!inString) {
+        inString = true;
+        stringChar = char;
+      } else if (char === stringChar) {
+        inString = false;
+        stringChar = '';
+      }
+      currentArg += char;
+      continue;
+    }
+    
+    if (inString) {
+      currentArg += char;
+      continue;
+    }
+    
+    // 处理括号深度
+    if (char === '(') {
+      depth++;
+      currentArg += char;
+      continue;
+    }
+    
+    if (char === ')') {
+      depth--;
+      currentArg += char;
+      continue;
+    }
+    
+    // 处理逗号分隔符
+    if (char === ',' && depth === 0) {
+      args.push(currentArg.trim());
+      currentArg = '';
+      continue;
+    }
+    
+    currentArg += char;
+  }
+  
+  // 添加最后一个参数
+  if (currentArg.trim()) {
+    args.push(currentArg.trim());
+  }
+  
+  return args;
 }
 
 /**

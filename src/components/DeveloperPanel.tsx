@@ -23,7 +23,12 @@ const DeveloperPanel: React.FC<DeveloperPanelProps> = ({ webR }) => {
   } | null>(null);
   const [selectedTestCase, setSelectedTestCase] = useState<string>('simpleGgplot');
   
-  const { generatedCode, blocks } = useBlockStore();
+  const { 
+    generatedCode, 
+    blocks, 
+    enableCodeNormalization, 
+    setEnableCodeNormalization 
+  } = useBlockStore();
   
   // 测试当前代码的可逆性
   const handleTestCurrent = async () => {
@@ -202,6 +207,34 @@ const DeveloperPanel: React.FC<DeveloperPanelProps> = ({ webR }) => {
             <div className="developer-info-box">
               <h4>🐛 调试信息</h4>
               <p>查看应用的实时状态和调试信息</p>
+            </div>
+            
+            {/* 代码规范化开关 */}
+            <div className="developer-section">
+              <h4>⚙️ 编辑器设置</h4>
+              <div className="developer-toggle-item">
+                <div className="toggle-info">
+                  <span className="label">代码规范化：</span>
+                  <p className="toggle-description">
+                    启用后，手动编辑的代码会自动格式化为标准格式。
+                    禁用可保留用户的代码格式（如空格、换行等）。
+                  </p>
+                </div>
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={enableCodeNormalization}
+                    onChange={(e) => setEnableCodeNormalization(e.target.checked)}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+              <div className="developer-info-item">
+                <span className="label">当前状态：</span>
+                <span className={`value ${enableCodeNormalization ? 'status-enabled' : 'status-disabled'}`}>
+                  {enableCodeNormalization ? '✅ 已启用' : '❌ 已禁用'}
+                </span>
+              </div>
             </div>
             
             <div className="developer-section">

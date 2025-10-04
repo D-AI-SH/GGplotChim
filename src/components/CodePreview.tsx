@@ -4,17 +4,37 @@ import { useBlockStore } from '../store/useBlockStore';
 import { Copy, Download, Lock, Unlock, RefreshCw } from 'lucide-react';
 
 const CodePreview: React.FC = () => {
-  const { generatedCode, updateCodeAndSync, syncSource } = useBlockStore();
+  const { generatedCode, updateCodeAndSync } = useBlockStore();
   const [isEditable, setIsEditable] = useState(false);
   const [localCode, setLocalCode] = useState(generatedCode);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const syncTimerRef = useRef<NodeJS.Timeout | null>(null); // 同步到积木块的计时器（500ms）
+  const normalizeTimerRef = useRef<NodeJS.Timeout | null>(null); // 规范化显示的计时器（5秒）
+  const lastEditTimeRef = useRef<number>(0); // 最后一次编辑的时间戳
   
-  // 当生成的代码更新时，同步到本地代码（仅在非用户编辑时）
+  // 当生成的代码更新时，同步到本地代码
   useEffect(() => {
-    if (syncSource !== 'code') {
-      setLocalCode(generatedCode);
+    // 如果用户最近5秒内编辑过，不要覆盖用户的输入
+    const timeSinceLastEdit = Date.now() - lastEditTimeRef.current;
+    if (timeSinceLastEdit < 5000) {
+      console.log('⏭️ [CodePreview] 用户最近编辑过，跳过更新');
+      return;
     }
-  }, [generatedCode, syncSource]);
+    
+    console.log('✨ [CodePreview] 更新本地代码（规范化后）');
+    setLocalCode(generatedCode);
+  }, [generatedCode]);
+  
+  // 组件卸载时清理计时器
+  useEffect(() => {
+    return () => {
+      if (syncTimerRef.current) {
+        clearTimeout(syncTimerRef.current);
+      }
+      if (normalizeTimerRef.current) {
+        clearTimeout(normalizeTimerRef.current);
+      }
+    };
+  }, []);
   
   const handleCopy = () => {
     navigator.clipboard.writeText(localCode);
@@ -43,27 +63,76 @@ const CodePreview: React.FC = () => {
     if (!value) return;
     
     console.log('📝 [CodePreview] 代码变更，长度:', value.length);
-    setLocalCode(value);
+    const currentCode = value; // 保存当前代码的快照
+    setLocalCode(currentCode);
+    lastEditTimeRef.current = Date.now(); // 记录编辑时间
     
-    // 防抖：用户停止输入500ms后才同步到积木
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
+    // 清除所有现有的计时器
+    if (syncTimerRef.current) {
+      clearTimeout(syncTimerRef.current);
+    }
+    if (normalizeTimerRef.current) {
+      clearTimeout(normalizeTimerRef.current);
     }
     
-    debounceTimerRef.current = setTimeout(() => {
+    // 第一步：500ms 后同步到积木块（解析AST并更新store）
+    syncTimerRef.current = setTimeout(async () => {
       if (isEditable) {
-        console.log('⏰ [CodePreview] 防抖计时器触发，开始同步...');
-        updateCodeAndSync(value);
+        console.log('⏰ [CodePreview] 500ms计时器触发，同步到积木块...');
+        console.log('📊 [CodePreview] 同步的代码长度:', currentCode.length);
+        await updateCodeAndSync(currentCode);
+        console.log('✅ [CodePreview] 积木块同步完成');
+        
+        // 第二步：再等待5秒后，如果用户没有继续编辑，则显示规范化后的代码
+        normalizeTimerRef.current = setTimeout(() => {
+          const timeSinceLastEdit = Date.now() - lastEditTimeRef.current;
+          if (timeSinceLastEdit >= 5000) {
+            console.log('🎨 [CodePreview] 5秒无编辑，准备应用代码规范化');
+            const { generatedCode: updatedCode } = useBlockStore.getState();
+            console.log('📊 [CodePreview] 编辑时的代码长度:', currentCode.length);
+            console.log('📊 [CodePreview] 规范化后代码长度:', updatedCode.length);
+            console.log('📊 [CodePreview] 编辑时代码前100字符:', currentCode.substring(0, 100));
+            console.log('📊 [CodePreview] 规范化后前100字符:', updatedCode.substring(0, 100));
+            console.log('📊 [CodePreview] 代码是否相同:', currentCode === updatedCode);
+            if (currentCode !== updatedCode) {
+              console.log('✅ [CodePreview] 应用规范化代码');
+              setLocalCode(updatedCode);
+            } else {
+              console.log('⏭️ [CodePreview] 代码已经是规范化的，无需更新');
+            }
+          } else {
+            console.log('⏭️ [CodePreview] 用户继续编辑了，跳过规范化');
+          }
+        }, 5000);
       }
     }, 500);
   };
   
-  const handleSyncNow = () => {
+  const handleSyncNow = async () => {
     console.log('🔄 [CodePreview] 手动触发同步');
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
+    const codeBeforeSync = localCode;
+    console.log('📊 [CodePreview] 同步前代码长度:', codeBeforeSync.length);
+    
+    // 清除所有计时器
+    if (syncTimerRef.current) {
+      clearTimeout(syncTimerRef.current);
     }
-    updateCodeAndSync(localCode);
+    if (normalizeTimerRef.current) {
+      clearTimeout(normalizeTimerRef.current);
+    }
+    
+    // 立即同步并规范化
+    await updateCodeAndSync(codeBeforeSync);
+    console.log('✅ [CodePreview] 手动同步完成，立即应用规范化');
+    // 等待下一个 tick 以获取更新后的 generatedCode
+    setTimeout(() => {
+      const { generatedCode: updatedCode } = useBlockStore.getState();
+      console.log('📊 [CodePreview] 规范化后代码长度:', updatedCode.length);
+      console.log('📊 [CodePreview] 同步前代码前100字符:', codeBeforeSync.substring(0, 100));
+      console.log('📊 [CodePreview] 规范化后前100字符:', updatedCode.substring(0, 100));
+      console.log('📊 [CodePreview] 代码是否相同:', codeBeforeSync === updatedCode);
+      setLocalCode(updatedCode);
+    }, 0);
   };
   
   return (
@@ -122,7 +191,7 @@ const CodePreview: React.FC = () => {
       {isEditable && (
         <div className="code-sync-hint">
           <span className="hint-icon">💡</span>
-          <span>编辑代码后会自动同步到左侧积木块（延迟500ms），或点击"同步"按钮立即同步</span>
+          <span>编辑代码后会自动同步到积木块（500ms后），5秒无编辑时自动规范化显示</span>
         </div>
       )}
     </div>

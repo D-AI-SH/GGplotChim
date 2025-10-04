@@ -150,8 +150,11 @@ const ReversibilityTester: React.FC<ReversibilityTesterProps> = ({ webR }) => {
       <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
         {/* 测试说明 */}
         <div style={{ marginBottom: '20px', padding: '12px', backgroundColor: '#f3f4f6', borderRadius: '8px' }}>
-          <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+          <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#6b7280' }}>
             可逆性测试：验证 <strong>代码 → 积木 → 代码</strong> 的转换是否保持语义一致
+          </p>
+          <p style={{ margin: 0, fontSize: '13px', color: '#9ca3af' }}>
+            💡 粘贴或输入代码时会自动规范化（统一空格、合并换行、标准化参数等）
           </p>
         </div>
         

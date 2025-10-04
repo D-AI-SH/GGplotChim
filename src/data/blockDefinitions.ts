@@ -251,9 +251,15 @@ export const blockDefinitions: BlockDefinition[] = [
         label: '数据集名称',
         defaultValue: 'data',
         required: true
+      },
+      {
+        name: 'mapping',
+        type: 'text',
+        label: 'mapping (可选)',
+        required: false
       }
     ],
-    rTemplate: 'ggplot({{data}})'
+    rTemplate: 'ggplot({{data}}{{#if mapping}}, {{mapping}}{{/if}})'
   },
   
   // ========== 3. aes() 美学映射 ==========
@@ -357,7 +363,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'geom_point({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if size}}{{#if mapping}}, {{/if}}size = {{size}}{{/if}}{{#if alpha}}, alpha = {{alpha}}{{/if}}{{#if color}}, color = "{{color}}"{{/if}}{{#if shape}}, shape = {{shape}}{{/if}})'
+    rTemplate: 'geom_point({{#if mapping}}mapping = {{mapping}}, {{/if}}{{#if size}}size = {{size}}, {{/if}}{{#if alpha}}alpha = {{alpha}}, {{/if}}{{#if color}}color = {{color}}, {{/if}}{{#if shape}}shape = {{shape}}, {{/if}})'
   },
   
   {
@@ -393,7 +399,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'geom_line({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if linewidth}}{{#if mapping}}, {{/if}}linewidth = {{linewidth}}{{/if}}{{#if linetype}}, linetype = "{{linetype}}"{{/if}}{{#if color}}, color = "{{color}}"{{/if}})'
+    rTemplate: 'geom_line({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if linewidth}}{{#if mapping}}, {{/if}}linewidth = {{linewidth}}{{/if}}{{#if linetype}}, linetype = {{linetype}}{{/if}}{{#if color}}, color = {{color}}{{/if}})'
   },
   
   {
@@ -466,7 +472,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'geom_col({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if position}}{{#if mapping}}, {{/if}}position = "{{position}}"{{/if}}{{#if width}}, width = {{width}}{{/if}})'
+    rTemplate: 'geom_col({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if position}}{{#if mapping}}, {{/if}}position = {{position}}{{/if}}{{#if width}}, width = {{width}}{{/if}})'
   },
   
   {
@@ -496,7 +502,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'geom_histogram({{#if bins}}bins = {{bins}}{{/if}}{{#if binwidth}}{{#if bins}}, {{/if}}binwidth = {{binwidth}}{{/if}}{{#if fill}}, fill = "{{fill}}"{{/if}})'
+    rTemplate: 'geom_histogram({{#if bins}}bins = {{bins}}{{/if}}{{#if binwidth}}{{#if bins}}, {{/if}}binwidth = {{binwidth}}{{/if}}{{#if fill}}, fill = {{fill}}{{/if}})'
   },
   
   {
@@ -526,7 +532,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'geom_boxplot({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if width}}{{#if mapping}}, {{/if}}width = {{width}}{{/if}}{{#if outlier_color}}, outlier.color = "{{outlier_color}}"{{/if}})'
+    rTemplate: 'geom_boxplot({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if width}}{{#if mapping}}, {{/if}}width = {{width}}{{/if}}{{#if outlier_color}}, outlier.color = {{outlier_color}}{{/if}})'
   },
   
   {
@@ -537,6 +543,12 @@ export const blockDefinitions: BlockDefinition[] = [
     description: '平滑趋势线',
     color: '#ec4899',
     params: [
+      {
+        name: 'mapping',
+        type: 'text',
+        label: 'mapping (可选)',
+        required: false
+      },
       {
         name: 'method',
         type: 'text',
@@ -557,7 +569,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'geom_smooth({{#if method}}method = "{{method}}"{{/if}}{{#if se}}{{#if method}}, {{/if}}se = {{se}}{{/if}}{{#if level}}, level = {{level}}{{/if}})'
+    rTemplate: 'geom_smooth({{#if mapping}}mapping = {{mapping}}, {{/if}}{{#if method}}method = {{method}}, {{/if}}{{#if se}}se = {{se}}, {{/if}}{{#if level}}level = {{level}}, {{/if}})'
   },
   
   {
@@ -617,7 +629,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'geom_area({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if alpha}}{{#if mapping}}, {{/if}}alpha = {{alpha}}{{/if}}{{#if fill}}, fill = "{{fill}}"{{/if}})'
+    rTemplate: 'geom_area({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if alpha}}{{#if mapping}}, {{/if}}alpha = {{alpha}}{{/if}}{{#if fill}}, fill = {{fill}}{{/if}})'
   },
   
   // ========== 5. 标度 (Scales) ==========
@@ -648,7 +660,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'scale_x_continuous({{#if name}}name = "{{name}}"{{/if}}{{#if limits}}, limits = {{limits}}{{/if}}{{#if breaks}}, breaks = {{breaks}}{{/if}})'
+    rTemplate: 'scale_x_continuous({{#if name}}name = {{name}}{{/if}}{{#if limits}}, limits = {{limits}}{{/if}}{{#if breaks}}, breaks = {{breaks}}{{/if}})'
   },
   
   {
@@ -678,7 +690,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'scale_y_continuous({{#if name}}name = "{{name}}"{{/if}}{{#if limits}}, limits = {{limits}}{{/if}}{{#if breaks}}, breaks = {{breaks}}{{/if}})'
+    rTemplate: 'scale_y_continuous({{#if name}}name = {{name}}{{/if}}{{#if limits}}, limits = {{limits}}{{/if}}{{#if breaks}}, breaks = {{breaks}}{{/if}})'
   },
   
   {
@@ -702,7 +714,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'scale_color_manual({{#if values}}values = {{values}}{{/if}}{{#if name}}, name = "{{name}}"{{/if}})'
+    rTemplate: 'scale_color_manual({{#if values}}values = {{values}}{{/if}}{{#if name}}, name = {{name}}{{/if}})'
   },
   
   {
@@ -726,7 +738,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'scale_fill_manual({{#if values}}values = {{values}}{{/if}}{{#if name}}, name = "{{name}}"{{/if}})'
+    rTemplate: 'scale_fill_manual({{#if values}}values = {{values}}{{/if}}{{#if name}}, name = {{name}}{{/if}})'
   },
   
   {
@@ -750,7 +762,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'scale_color_brewer({{#if palette}}palette = "{{palette}}"{{/if}}{{#if direction}}, direction = {{direction}}{{/if}})'
+    rTemplate: 'scale_color_brewer({{#if palette}}palette = {{palette}}{{/if}}{{#if direction}}, direction = {{direction}}{{/if}})'
   },
   
   {
@@ -774,7 +786,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'scale_fill_gradient({{#if low}}low = "{{low}}"{{/if}}{{#if high}}, high = "{{high}}"{{/if}})'
+    rTemplate: 'scale_fill_gradient({{#if low}}low = {{low}}{{/if}}{{#if high}}, high = {{high}}{{/if}})'
   },
   
   // ========== 6. 坐标系 (Coordinates) ==========
@@ -829,7 +841,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'coord_polar({{#if theta}}theta = "{{theta}}"{{/if}})'
+    rTemplate: 'coord_polar({{#if theta}}theta = {{theta}}{{/if}})'
   },
   
   // ========== 7. 分面 (Facets) ==========
@@ -890,7 +902,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'facet_grid({{#if rows}}rows = vars({{rows}}){{/if}}{{#if cols}}{{#if rows}}, {{/if}}cols = vars({{cols}}){{/if}}{{#if scales}}, scales = "{{scales}}"{{/if}})'
+    rTemplate: 'facet_grid({{#if rows}}rows = vars({{rows}}){{/if}}{{#if cols}}{{#if rows}}, {{/if}}cols = vars({{cols}}){{/if}}{{#if scales}}, scales = {{scales}}{{/if}})'
   },
   
   // ========== 8. 统计变换 (Stats) ==========
@@ -915,7 +927,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'stat_summary({{#if fun}}fun = {{fun}}{{/if}}{{#if geom}}, geom = "{{geom}}"{{/if}})'
+    rTemplate: 'stat_summary({{#if fun}}fun = {{fun}}{{/if}}{{#if geom}}, geom = {{geom}}{{/if}})'
   },
   
   {
@@ -939,7 +951,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'stat_smooth({{#if method}}method = "{{method}}"{{/if}}{{#if formula}}, formula = {{formula}}{{/if}})'
+    rTemplate: 'stat_smooth({{#if method}}method = {{method}}{{/if}}{{#if formula}}, formula = {{formula}}{{/if}})'
   },
   
   // ========== 9. 标签 (Labels) ==========
@@ -982,7 +994,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'labs({{#if title}}title = "{{title}}"{{/if}}{{#if subtitle}}, subtitle = "{{subtitle}}"{{/if}}{{#if x}}, x = "{{x}}"{{/if}}{{#if y}}, y = "{{y}}"{{/if}}{{#if caption}}, caption = "{{caption}}"{{/if}})'
+    rTemplate: 'labs({{#if title}}title = {{title}}{{/if}}{{#if subtitle}}, subtitle = {{subtitle}}{{/if}}{{#if x}}, x = {{x}}{{/if}}{{#if y}}, y = {{y}}{{/if}}{{#if caption}}, caption = {{caption}}{{/if}})'
   },
   
   {
@@ -1006,7 +1018,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'ggtitle({{#if label}}"{{label}}"{{/if}}{{#if subtitle}}, subtitle = "{{subtitle}}"{{/if}})'
+    rTemplate: 'ggtitle({{#if label}}{{label}}{{/if}}{{#if subtitle}}, subtitle = {{subtitle}}{{/if}})'
   },
   
   {
@@ -1024,7 +1036,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'xlab({{#if label}}"{{label}}"{{/if}})'
+    rTemplate: 'xlab({{#if label}}{{label}}{{/if}})'
   },
   
   {
@@ -1042,7 +1054,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'ylab({{#if label}}"{{label}}"{{/if}})'
+    rTemplate: 'ylab({{#if label}}{{label}}{{/if}})'
   },
   
   // ========== 10. 主题 (Themes) ==========

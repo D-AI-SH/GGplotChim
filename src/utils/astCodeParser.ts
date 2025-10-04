@@ -628,8 +628,13 @@ function extractParams(blockType: BlockType, astArgs: any): Record<string, any> 
       // 特定函数的第一个参数映射
       if (blockType === BlockType.LIBRARY && posIndex === 1) {
         params.package = extractValue(argValue);
-      } else if (blockType === BlockType.GGPLOT_INIT && posIndex === 1) {
-        params.data = extractValue(argValue);
+      } else if (blockType === BlockType.GGPLOT_INIT) {
+        if (posIndex === 1) {
+          params.data = extractValue(argValue);
+        } else if (posIndex === 2) {
+          // 第二个参数通常是 mapping (aes)
+          params.mapping = extractValue(argValue);
+        }
       } else if (blockType === BlockType.PRINT && posIndex === 1) {
         params.value = extractValue(argValue);
       } 
@@ -657,9 +662,25 @@ function extractParams(blockType: BlockType, astArgs: any): Record<string, any> 
       else if (blockType === BlockType.ANNOTATE && posIndex === 1) {
         params.geom = extractValue(argValue);
       }
-      // ggsave 函数的第一个参数是 plot 对象
-      else if (blockType === BlockType.GGSAVE && posIndex === 1) {
-        params.plot = extractValue(argValue);
+      // ggsave 函数的参数处理
+      // 标准签名: ggsave(filename, plot = last_plot(), ...)
+      // 但也支持: ggsave(plot, file="filename")
+      else if (blockType === BlockType.GGSAVE) {
+        if (posIndex === 1) {
+          // 第一个位置参数可能是 filename 或 plot
+          // 如果是字符串，视为 filename；否则视为 plot
+          const value = extractValue(argValue);
+          if (argValue.type === 'Symbol' || (typeof value === 'string' && !value.startsWith('"') && !value.startsWith("'"))) {
+            // 变量名，视为 plot 对象
+            params.plot = value;
+          } else {
+            // 字符串字面量，视为 filename
+            params.file = value;
+          }
+        } else if (posIndex === 2) {
+          // 第二个位置参数：如果第一个是 plot，这个就是 file
+          params.file = extractValue(argValue);
+        }
       }
       // ylim 函数的参数是两个数值（最小值和最大值）
       else if (blockType === BlockType.YLIM) {
@@ -715,7 +736,11 @@ function extractValue(node: any): string {
     if (literalClass === 'character') {
       // 字符串需要添加引号（使用双引号）
       // 但要避免为空字符串添加引号后变成 ""
-      return value ? `"${value}"` : '""';
+      // 检查值是否已经包含引号（避免双重引号）
+      if (value && !value.startsWith('"') && !value.startsWith("'")) {
+        return `"${value}"`;
+      }
+      return value || '""';
     } else if (literalClass === 'logical') {
       // 逻辑值保持大写（TRUE/FALSE）
       // NA 也是逻辑类型，但已经在上面处理了
@@ -972,11 +997,20 @@ export async function parseRCodeToBlocksWithAST(
       
       // 检查是否是赋值语句中包含 ggplot 链式调用（如: p <- ggplot(...) + geom_*()）
       let ggplotChainNode = null;
+      let assignedVariableName: string | undefined = undefined;
       if (node.type === 'call' && node.function_name === '<-' && node.arguments?._pos_2) {
         const rightSide = node.arguments._pos_2;
         if (rightSide.type === 'call' && rightSide.function_name === '+') {
           console.log('🎯 [AST解析器] 检测到赋值语句中的 ggplot 链式调用');
           ggplotChainNode = rightSide;
+          // 提取左侧的变量名
+          const leftSide = node.arguments._pos_1;
+          console.log('📍 [AST解析器] 左侧变量节点:', JSON.stringify(leftSide, null, 2));
+          if (leftSide && leftSide.type === 'symbol') {
+            // 🔧 修复：变量名在 name 字段，不是 value 字段
+            assignedVariableName = leftSide.name || leftSide.value;
+            console.log(`📝 [AST解析器] 变量赋值: ${assignedVariableName}`);
+          }
         }
       }
       // 或者直接是 ggplot 链式调用
@@ -988,14 +1022,25 @@ export async function parseRCodeToBlocksWithAST(
       if (ggplotChainNode) {
         console.log('⛓️ [AST解析器] 展开 ggplot 链式调用');
         const chainBlocks = flattenGgplotChain(ggplotChainNode, blockIdCounter);
+        console.log(`⛓️ [AST解析器] 展开得到 ${chainBlocks.length} 个积木`);
         
         // 💡 新布局：第一个积木（ggplot）在左列，其余图层在右列
         if (chainBlocks.length > 0) {
           // 第一个积木（ggplot 主函数）放在左列
           const firstBlock = chainBlocks[0];
+          console.log(`📍 [AST解析器] 第一个积木: ${firstBlock.id}, 类型: ${firstBlock.blockType}`);
           firstBlock.position.x = LEFT_COLUMN_X;
           firstBlock.position.y = leftColumnY;
           firstBlock.order = 0;
+          
+          // 如果有变量赋值，保存到第一个积木
+          if (assignedVariableName) {
+            firstBlock.assignedTo = assignedVariableName;
+            console.log(`📝 [AST解析器] ggplot 链赋值给变量: ${assignedVariableName}, 已设置到积木 ${firstBlock.id}`);
+            console.log(`🔍 [AST解析器] 验证积木属性: assignedTo = ${firstBlock.assignedTo}`);
+          } else {
+            console.log(`⚠️ [AST解析器] 没有检测到变量赋值`);
+          }
           
           // 设置虚线连接到右列的图层
           if (chainBlocks.length > 1) {
