@@ -1,6 +1,9 @@
 # library
-library(tidyverse)
-library(viridis)
+# 注意：webR 不支持 tidyverse 元包，需要分别加载核心包
+library(ggplot2)  # 用于绘图
+library(dplyr)    # 用于 %>%, group_by, summarize, arrange, mutate 等
+library(tidyr)    # 用于 gather 函数
+library(viridis)  # 用于配色
  
 # Create dataset
 data <- data.frame(
@@ -79,6 +82,5 @@ p <- ggplot(data) +
   geom_segment(data=base_data, aes(x = start, y = -5, xend = end, yend = -5), colour = "black", alpha=0.8, size=0.6 , inherit.aes = FALSE )  +
   geom_text(data=base_data, aes(x = title, y = -18, label=group), hjust=c(1,1,0,0), colour = "black", alpha=0.8, size=4, fontface="bold", inherit.aes = FALSE)
 
-
-# Save at png
-ggsave(p, file="output.png", width=10, height=10)
+# 显示图表（webR 需要显式打印才能显示）
+print(p)

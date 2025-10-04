@@ -4,6 +4,7 @@ import Canvas from './components/Canvas';
 import PreviewPanel from './components/PreviewPanel';
 import DeveloperPanel from './components/DeveloperPanel';
 import DeveloperMode from './components/DeveloperMode';
+import RPackageSelector from './components/RPackageSelector';
 import { BlockDefinition } from './types/blocks';
 import { useBlockStore } from './store/useBlockStore';
 import { Trash2, Download, Upload } from 'lucide-react';
@@ -11,22 +12,28 @@ import { webRRunner } from './core/rRunner/webRRunner';
 
 const App: React.FC = () => {
   const canvasRef = React.useRef<any>(null);
-  const { clearAll, isWebRReady, webRInitProgress, isDeveloperMode } = useBlockStore();
+  const { clearAll, isWebRReady, webRInitProgress, isDeveloperMode, selectedPackages } = useBlockStore();
+  const [showPackageSelector, setShowPackageSelector] = useState(true);
+  const [initStarted, setInitStarted] = useState(false);
   
-  // 在应用启动时立即初始化 WebR
+  // 当用户确认包选择后，开始初始化 WebR
   useEffect(() => {
-    const initWebR = async () => {
-      try {
-        console.log('🚀 应用启动，开始初始化 WebR...');
-        await webRRunner.initialize();
-        console.log('✅ WebR 初始化完成');
-      } catch (error) {
-        console.error('❌ WebR 初始化失败:', error);
-      }
-    };
-    
-    initWebR();
-  }, []);
+    if (!initStarted && !showPackageSelector) {
+      const initWebR = async () => {
+        try {
+          console.log('🚀 应用启动，开始初始化 WebR...');
+          console.log('📦 用户选择的包:', selectedPackages);
+          await webRRunner.initialize();
+          console.log('✅ WebR 初始化完成');
+        } catch (error) {
+          console.error('❌ WebR 初始化失败:', error);
+        }
+      };
+      
+      setInitStarted(true);
+      initWebR();
+    }
+  }, [showPackageSelector, initStarted, selectedPackages]);
   
   const handleBlockDragStart = (block: BlockDefinition, e: React.MouseEvent) => {
     // 将拖拽事件传递给Canvas处理
@@ -53,8 +60,17 @@ const App: React.FC = () => {
   
   return (
     <div className="app">
+      {/* WebR 包选择界面 */}
+      {showPackageSelector && !isWebRReady && (
+        <div className="webr-loading-overlay">
+          <div className="webr-loading-content" style={{ maxWidth: '800px', padding: '20px' }}>
+            <RPackageSelector onClose={() => setShowPackageSelector(false)} />
+          </div>
+        </div>
+      )}
+      
       {/* WebR 初始化加载遮罩层 */}
-      {!isWebRReady && (
+      {!showPackageSelector && !isWebRReady && (
         <div className="webr-loading-overlay">
           <div className="webr-loading-content">
             <div className="webr-loading-spinner"></div>

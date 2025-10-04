@@ -75,7 +75,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: '{{variable}} <- {{value}}'
+    rTemplate: '{{#if variable}}{{variable}} <- {{/if}}{{value}}'
   },
   
   {
@@ -206,6 +206,639 @@ export const blockDefinitions: BlockDefinition[] = [
       }
     ],
     rTemplate: '{{code}}'
+  },
+  
+  // ========== R基础函数 ==========
+  {
+    id: 'c_vector',
+    type: BlockType.C_VECTOR,
+    category: BlockCategory.BASE,
+    label: 'c()',
+    description: '创建向量',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'elements',
+        type: 'text',
+        label: '元素',
+        defaultValue: '1, 2, 3',
+        required: true
+      }
+    ],
+    rTemplate: 'c({{elements}})'
+  },
+  
+  {
+    id: 'seq',
+    type: BlockType.SEQ,
+    category: BlockCategory.BASE,
+    label: 'seq()',
+    description: '生成序列',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'from',
+        type: 'number',
+        label: '从',
+        defaultValue: 1,
+        required: false
+      },
+      {
+        name: 'to',
+        type: 'number',
+        label: '到',
+        defaultValue: 10,
+        required: false
+      },
+      {
+        name: 'by',
+        type: 'number',
+        label: '步长',
+        required: false
+      },
+      {
+        name: 'length_out',
+        type: 'number',
+        label: '长度',
+        required: false
+      }
+    ],
+    rTemplate: 'seq({{#if from}}{{from}}{{/if}}{{#if to}}, {{to}}{{/if}}{{#if by}}, by={{by}}{{/if}}{{#if length_out}}, length.out={{length_out}}{{/if}})'
+  },
+  
+  {
+    id: 'rep',
+    type: BlockType.REP,
+    category: BlockCategory.BASE,
+    label: 'rep()',
+    description: '重复元素',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'x',
+        type: 'text',
+        label: '元素',
+        defaultValue: 'x',
+        required: true
+      },
+      {
+        name: 'times',
+        type: 'number',
+        label: '重复次数',
+        required: false
+      },
+      {
+        name: 'each',
+        type: 'number',
+        label: '每个重复',
+        required: false
+      }
+    ],
+    rTemplate: 'rep({{x}}{{#if times}}, {{times}}{{/if}}{{#if each}}, each={{each}}{{/if}})'
+  },
+  
+  {
+    id: 'paste',
+    type: BlockType.PASTE,
+    category: BlockCategory.BASE,
+    label: 'paste()',
+    description: '字符串连接',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'elements',
+        type: 'text',
+        label: '元素',
+        defaultValue: '"Hello", "World"',
+        required: true
+      },
+      {
+        name: 'sep',
+        type: 'text',
+        label: '分隔符',
+        defaultValue: ' ',
+        required: false
+      }
+    ],
+    rTemplate: 'paste({{elements}}{{#if sep}}, sep={{sep}}{{/if}})'
+  },
+  
+  {
+    id: 'factor',
+    type: BlockType.FACTOR,
+    category: BlockCategory.BASE,
+    label: 'factor()',
+    description: '创建因子',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'x',
+        type: 'text',
+        label: '数据',
+        defaultValue: 'x',
+        required: true
+      },
+      {
+        name: 'levels',
+        type: 'text',
+        label: '水平',
+        required: false
+      },
+      {
+        name: 'labels',
+        type: 'text',
+        label: '标签',
+        required: false
+      }
+    ],
+    rTemplate: 'factor({{x}}{{#if levels}}, levels={{levels}}{{/if}}{{#if labels}}, labels={{labels}}{{/if}})'
+  },
+  
+  {
+    id: 'as_factor',
+    type: BlockType.AS_FACTOR,
+    category: BlockCategory.BASE,
+    label: 'as.factor()',
+    description: '转换为因子',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'x',
+        type: 'text',
+        label: '数据',
+        defaultValue: 'x',
+        required: true
+      }
+    ],
+    rTemplate: 'as.factor({{x}})'
+  },
+  
+  {
+    id: 'ifelse',
+    type: BlockType.IFELSE,
+    category: BlockCategory.BASE,
+    label: 'ifelse()',
+    description: '条件表达式',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'test',
+        type: 'text',
+        label: '条件',
+        defaultValue: 'x > 0',
+        required: true
+      },
+      {
+        name: 'yes',
+        type: 'text',
+        label: '真值',
+        defaultValue: '1',
+        required: true
+      },
+      {
+        name: 'no',
+        type: 'text',
+        label: '假值',
+        defaultValue: '0',
+        required: true
+      }
+    ],
+    rTemplate: 'ifelse({{test}}, {{yes}}, {{no}})'
+  },
+  
+  {
+    id: 'data_frame',
+    type: BlockType.DATA_FRAME,
+    category: BlockCategory.BASE,
+    label: 'data.frame()',
+    description: '创建数据框',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'columns',
+        type: 'text',
+        label: '列定义',
+        defaultValue: 'x=1:10, y=rnorm(10)',
+        required: true
+      }
+    ],
+    rTemplate: 'data.frame({{columns}})'
+  },
+  
+  {
+    id: 'matrix',
+    type: BlockType.MATRIX,
+    category: BlockCategory.BASE,
+    label: 'matrix()',
+    description: '创建矩阵',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'data',
+        type: 'text',
+        label: '数据',
+        defaultValue: 'NA',
+        required: true
+      },
+      {
+        name: 'nrow',
+        type: 'number',
+        label: '行数',
+        required: false
+      },
+      {
+        name: 'ncol',
+        type: 'number',
+        label: '列数',
+        required: true
+      }
+    ],
+    rTemplate: 'matrix({{data}}{{#if nrow}}, {{nrow}}{{/if}}, {{ncol}})'
+  },
+  
+  {
+    id: 'rbind',
+    type: BlockType.RBIND,
+    category: BlockCategory.BASE,
+    label: 'rbind()',
+    description: '按行合并',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'objects',
+        type: 'text',
+        label: '对象',
+        defaultValue: 'df1, df2',
+        required: true
+      }
+    ],
+    rTemplate: 'rbind({{objects}})'
+  },
+  
+  {
+    id: 'cbind',
+    type: BlockType.CBIND,
+    category: BlockCategory.BASE,
+    label: 'cbind()',
+    description: '按列合并',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'objects',
+        type: 'text',
+        label: '对象',
+        defaultValue: 'vec1, vec2',
+        required: true
+      }
+    ],
+    rTemplate: 'cbind({{objects}})'
+  },
+  
+  {
+    id: 'nrow',
+    type: BlockType.NROW,
+    category: BlockCategory.BASE,
+    label: 'nrow()',
+    description: '获取行数',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'x',
+        type: 'text',
+        label: '数据',
+        defaultValue: 'data',
+        required: true
+      }
+    ],
+    rTemplate: 'nrow({{x}})'
+  },
+  
+  {
+    id: 'ncol',
+    type: BlockType.NCOL,
+    category: BlockCategory.BASE,
+    label: 'ncol()',
+    description: '获取列数',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'x',
+        type: 'text',
+        label: '数据',
+        defaultValue: 'data',
+        required: true
+      }
+    ],
+    rTemplate: 'ncol({{x}})'
+  },
+  
+  {
+    id: 'colnames',
+    type: BlockType.COLNAMES,
+    category: BlockCategory.BASE,
+    label: 'colnames()',
+    description: '获取/设置列名',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'x',
+        type: 'text',
+        label: '数据',
+        defaultValue: 'data',
+        required: true
+      }
+    ],
+    rTemplate: 'colnames({{x}})'
+  },
+  
+  {
+    id: 'rownames',
+    type: BlockType.ROWNAMES,
+    category: BlockCategory.BASE,
+    label: 'rownames()',
+    description: '获取/设置行名',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'x',
+        type: 'text',
+        label: '数据',
+        defaultValue: 'data',
+        required: true
+      }
+    ],
+    rTemplate: 'rownames({{x}})'
+  },
+  
+  {
+    id: 'levels',
+    type: BlockType.LEVELS,
+    category: BlockCategory.BASE,
+    label: 'levels()',
+    description: '获取因子水平',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'x',
+        type: 'text',
+        label: '因子',
+        defaultValue: 'data$group',
+        required: true
+      }
+    ],
+    rTemplate: 'levels({{x}})'
+  },
+  
+  {
+    id: 'nlevels',
+    type: BlockType.NLEVELS,
+    category: BlockCategory.BASE,
+    label: 'nlevels()',
+    description: '获取因子水平数',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'x',
+        type: 'text',
+        label: '因子',
+        defaultValue: 'data$group',
+        required: true
+      }
+    ],
+    rTemplate: 'nlevels({{x}})'
+  },
+  
+  {
+    id: 'sum',
+    type: BlockType.SUM,
+    category: BlockCategory.BASE,
+    label: 'sum()',
+    description: '求和',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'x',
+        type: 'text',
+        label: '数据',
+        defaultValue: 'x',
+        required: true
+      },
+      {
+        name: 'na_rm',
+        type: 'boolean',
+        label: '移除NA',
+        defaultValue: false,
+        required: false
+      }
+    ],
+    rTemplate: 'sum({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})'
+  },
+  
+  {
+    id: 'mean',
+    type: BlockType.MEAN,
+    category: BlockCategory.BASE,
+    label: 'mean()',
+    description: '平均值',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'x',
+        type: 'text',
+        label: '数据',
+        defaultValue: 'x',
+        required: true
+      },
+      {
+        name: 'na_rm',
+        type: 'boolean',
+        label: '移除NA',
+        defaultValue: false,
+        required: false
+      }
+    ],
+    rTemplate: 'mean({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})'
+  },
+  
+  {
+    id: 'min',
+    type: BlockType.MIN,
+    category: BlockCategory.BASE,
+    label: 'min()',
+    description: '最小值',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'x',
+        type: 'text',
+        label: '数据',
+        defaultValue: 'x',
+        required: true
+      },
+      {
+        name: 'na_rm',
+        type: 'boolean',
+        label: '移除NA',
+        defaultValue: false,
+        required: false
+      }
+    ],
+    rTemplate: 'min({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})'
+  },
+  
+  {
+    id: 'max',
+    type: BlockType.MAX,
+    category: BlockCategory.BASE,
+    label: 'max()',
+    description: '最大值',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'x',
+        type: 'text',
+        label: '数据',
+        defaultValue: 'x',
+        required: true
+      },
+      {
+        name: 'na_rm',
+        type: 'boolean',
+        label: '移除NA',
+        defaultValue: false,
+        required: false
+      }
+    ],
+    rTemplate: 'max({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})'
+  },
+  
+  {
+    id: 'median',
+    type: BlockType.MEDIAN,
+    category: BlockCategory.BASE,
+    label: 'median()',
+    description: '中位数',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'x',
+        type: 'text',
+        label: '数据',
+        defaultValue: 'x',
+        required: true
+      },
+      {
+        name: 'na_rm',
+        type: 'boolean',
+        label: '移除NA',
+        defaultValue: false,
+        required: false
+      }
+    ],
+    rTemplate: 'median({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})'
+  },
+  
+  {
+    id: 'sd',
+    type: BlockType.SD,
+    category: BlockCategory.BASE,
+    label: 'sd()',
+    description: '标准差',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'x',
+        type: 'text',
+        label: '数据',
+        defaultValue: 'x',
+        required: true
+      },
+      {
+        name: 'na_rm',
+        type: 'boolean',
+        label: '移除NA',
+        defaultValue: false,
+        required: false
+      }
+    ],
+    rTemplate: 'sd({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})'
+  },
+  
+  {
+    id: 'var',
+    type: BlockType.VAR,
+    category: BlockCategory.BASE,
+    label: 'var()',
+    description: '方差',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'x',
+        type: 'text',
+        label: '数据',
+        defaultValue: 'x',
+        required: true
+      },
+      {
+        name: 'na_rm',
+        type: 'boolean',
+        label: '移除NA',
+        defaultValue: false,
+        required: false
+      }
+    ],
+    rTemplate: 'var({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})'
+  },
+  
+  {
+    id: 'length',
+    type: BlockType.LENGTH,
+    category: BlockCategory.BASE,
+    label: 'length()',
+    description: '长度',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'x',
+        type: 'text',
+        label: '数据',
+        defaultValue: 'x',
+        required: true
+      }
+    ],
+    rTemplate: 'length({{x}})'
+  },
+  
+  {
+    id: 'sample',
+    type: BlockType.SAMPLE,
+    category: BlockCategory.BASE,
+    label: 'sample()',
+    description: '随机抽样',
+    color: '#f59e0b',
+    params: [
+      {
+        name: 'x',
+        type: 'text',
+        label: '数据',
+        defaultValue: '1:10',
+        required: true
+      },
+      {
+        name: 'size',
+        type: 'number',
+        label: '样本量',
+        required: true
+      },
+      {
+        name: 'replace',
+        type: 'boolean',
+        label: '有放回',
+        defaultValue: false,
+        required: false
+      }
+    ],
+    rTemplate: 'sample({{x}}, {{size}}{{#if replace}}, replace=TRUE{{/if}})'
   },
   
   // ========== 1. 数据层 (Data) ==========
@@ -581,9 +1214,33 @@ export const blockDefinitions: BlockDefinition[] = [
     color: '#ec4899',
     params: [
       {
+        name: 'data',
+        type: 'text',
+        label: 'data',
+        required: false
+      },
+      {
         name: 'mapping',
         type: 'text',
-        label: 'mapping (必需)',
+        label: 'mapping',
+        required: false
+      },
+      {
+        name: 'color',
+        type: 'text',
+        label: 'color',
+        required: false
+      },
+      {
+        name: 'fontface',
+        type: 'text',
+        label: 'fontface',
+        required: false
+      },
+      {
+        name: 'alpha',
+        type: 'text',
+        label: 'alpha',
         required: false
       },
       {
@@ -593,13 +1250,31 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       },
       {
+        name: 'angle',
+        type: 'text',
+        label: 'angle',
+        required: false
+      },
+      {
         name: 'vjust',
         type: 'text',
         label: 'vjust',
         required: false
+      },
+      {
+        name: 'hjust',
+        type: 'text',
+        label: 'hjust',
+        required: false
+      },
+      {
+        name: 'inherit_aes',
+        type: 'text',
+        label: 'inherit.aes',
+        required: false
       }
     ],
-    rTemplate: 'geom_text({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if size}}, size = {{size}}{{/if}}{{#if vjust}}, vjust = {{vjust}}{{/if}})'
+    rTemplate: 'geom_text({{#if data}}data = {{data}}{{/if}}{{#if mapping}}{{#if data}}, {{/if}}mapping = {{mapping}}{{/if}}{{#if color}}, color = {{color}}{{/if}}{{#if fontface}}, fontface = {{fontface}}{{/if}}{{#if alpha}}, alpha = {{alpha}}{{/if}}{{#if size}}, size = {{size}}{{/if}}{{#if angle}}, angle = {{angle}}{{/if}}{{#if vjust}}, vjust = {{vjust}}{{/if}}{{#if hjust}}, hjust = {{hjust}}{{/if}}{{#if inherit_aes}}, inherit.aes = {{inherit_aes}}{{/if}})'
   },
   
   {
@@ -1193,13 +1868,19 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       },
       {
+        name: 'size',
+        type: 'text',
+        label: 'size',
+        required: false
+      },
+      {
         name: 'inherit_aes',
         type: 'text',
         label: 'inherit.aes',
         required: false
       }
     ],
-    rTemplate: 'geom_segment({{#if data}}data = {{data}}{{/if}}{{#if mapping}}{{#if data}}, {{/if}}mapping = {{mapping}}{{/if}}{{#if colour}}, colour = {{colour}}{{/if}}{{#if alpha}}, alpha = {{alpha}}{{/if}}{{#if linewidth}}, linewidth = {{linewidth}}{{/if}}{{#if inherit_aes}}, inherit.aes = {{inherit_aes}}{{/if}})'
+    rTemplate: 'geom_segment({{#if data}}data = {{data}}{{/if}}{{#if mapping}}{{#if data}}, {{/if}}mapping = {{mapping}}{{/if}}{{#if colour}}, colour = {{colour}}{{/if}}{{#if alpha}}, alpha = {{alpha}}{{/if}}{{#if linewidth}}, linewidth = {{linewidth}}{{/if}}{{#if size}}, size = {{size}}{{/if}}{{#if inherit_aes}}, inherit.aes = {{inherit_aes}}{{/if}})'
   },
   
   // ========== 12. 其他标度 ==========
@@ -1504,6 +2185,154 @@ export const blockDefinitions: BlockDefinition[] = [
     color: '#10b981',
     params: [],
     rTemplate: 'element_blank()'
+  },
+  
+  // ==================== 高级R语法 ====================
+  
+  {
+    id: 'pipe_operator',
+    type: BlockType.PIPE_OPERATOR,
+    category: BlockCategory.BASE,
+    label: '管道操作符 %>%',
+    description: 'tidyverse管道操作符，将左侧结果传递给右侧函数',
+    color: '#8b5cf6',
+    params: [
+      {
+        name: 'left',
+        type: 'text',
+        label: '左侧表达式',
+        required: true
+      },
+      {
+        name: 'right',
+        type: 'text',
+        label: '右侧函数',
+        required: true
+      }
+    ],
+    rTemplate: '{{left}} %>% {{right}}'
+  },
+  
+  {
+    id: 'index_access',
+    type: BlockType.INDEX_ACCESS,
+    category: BlockCategory.BASE,
+    label: '索引访问 $',
+    description: '访问数据框或列表的列/元素 (data$column)',
+    color: '#8b5cf6',
+    params: [
+      {
+        name: 'object',
+        type: 'text',
+        label: '对象名称',
+        required: true
+      },
+      {
+        name: 'field',
+        type: 'text',
+        label: '字段名称',
+        required: true
+      }
+    ],
+    rTemplate: '{{object}}${{field}}'
+  },
+  
+  {
+    id: 'arithmetic_expr',
+    type: BlockType.ARITHMETIC_EXPR,
+    category: BlockCategory.BASE,
+    label: '算术表达式',
+    description: '数学运算表达式 (支持 +, -, *, /, 括号等)',
+    color: '#8b5cf6',
+    params: [
+      {
+        name: 'expression',
+        type: 'text',
+        label: '表达式',
+        required: true,
+        defaultValue: 'a + b'
+      }
+    ],
+    rTemplate: '{{expression}}'
+  },
+  
+  {
+    id: 'subset_access',
+    type: BlockType.SUBSET_ACCESS,
+    category: BlockCategory.BASE,
+    label: '数组子集 []',
+    description: '访问向量、矩阵或数据框的子集 (data[rows, cols])',
+    color: '#8b5cf6',
+    params: [
+      {
+        name: 'object',
+        type: 'text',
+        label: '对象名称',
+        required: true
+      },
+      {
+        name: 'rows',
+        type: 'text',
+        label: '行索引',
+        defaultValue: ''
+      },
+      {
+        name: 'cols',
+        type: 'text',
+        label: '列索引',
+        defaultValue: ''
+      }
+    ],
+    rTemplate: '{{object}}[{{rows}}{{#if cols}}, {{cols}}{{/if}}]'
+  },
+  
+  {
+    id: 'negative_index',
+    type: BlockType.NEGATIVE_INDEX,
+    category: BlockCategory.BASE,
+    label: '负索引',
+    description: '排除指定的列或元素 (-c(1, 2))',
+    color: '#8b5cf6',
+    params: [
+      {
+        name: 'indices',
+        type: 'text',
+        label: '要排除的索引',
+        required: true,
+        defaultValue: '1, 2'
+      }
+    ],
+    rTemplate: '-c({{indices}})'
+  },
+  
+  {
+    id: 'namespace_call',
+    type: BlockType.NAMESPACE_CALL,
+    category: BlockCategory.BASE,
+    label: '命名空间调用',
+    description: '使用完全限定名调用函数 (package::function)',
+    color: '#8b5cf6',
+    params: [
+      {
+        name: 'package',
+        type: 'text',
+        label: '包名',
+        required: true
+      },
+      {
+        name: 'function',
+        type: 'text',
+        label: '函数名',
+        required: true
+      },
+      {
+        name: 'args',
+        type: 'text',
+        label: '参数',
+        defaultValue: ''
+      }
+    ],
+    rTemplate: '{{package}}::{{function}}({{args}})'
   }
 ];
 

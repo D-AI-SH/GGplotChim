@@ -25,6 +25,34 @@ export enum BlockType {
   COMMENT = 'comment',
   CUSTOM_CODE = 'custom_code', // 自定义代码块（用于存储无法识别的代码）
   
+  // R基础函数
+  C_VECTOR = 'c_vector', // c() 向量
+  SEQ = 'seq', // seq() 序列
+  REP = 'rep', // rep() 重复
+  PASTE = 'paste', // paste() 字符串连接
+  FACTOR = 'factor', // factor() 因子
+  AS_FACTOR = 'as_factor', // as.factor() 转换为因子
+  IFELSE = 'ifelse', // ifelse() 条件表达式
+  DATA_FRAME = 'data_frame', // data.frame() 数据框
+  MATRIX = 'matrix', // matrix() 矩阵
+  RBIND = 'rbind', // rbind() 按行合并
+  CBIND = 'cbind', // cbind() 按列合并
+  NROW = 'nrow', // nrow() 行数
+  NCOL = 'ncol', // ncol() 列数
+  COLNAMES = 'colnames', // colnames() 列名
+  ROWNAMES = 'rownames', // rownames() 行名
+  LEVELS = 'levels', // levels() 因子水平
+  NLEVELS = 'nlevels', // nlevels() 因子水平数
+  SUM = 'sum', // sum() 求和
+  MEAN = 'mean', // mean() 平均值
+  MIN = 'min', // min() 最小值
+  MAX = 'max', // max() 最大值
+  MEDIAN = 'median', // median() 中位数
+  SD = 'sd', // sd() 标准差
+  VAR = 'var', // var() 方差
+  LENGTH = 'length', // length() 长度
+  SAMPLE = 'sample', // sample() 随机抽样
+  
   // 1. 数据相关
   DATA_IMPORT = 'data_import',
   GGPLOT_INIT = 'ggplot_init',
@@ -93,7 +121,15 @@ export enum BlockType {
   GROUP_BY = 'group_by',
   ROWWISE = 'rowwise',
   UNIT = 'unit',
-  ELEMENT_BLANK = 'element_blank'
+  ELEMENT_BLANK = 'element_blank',
+  
+  // 11. 高级R语法
+  PIPE_OPERATOR = 'pipe_operator', // %>% 管道操作符
+  INDEX_ACCESS = 'index_access', // $ 索引访问 (data$column)
+  ARITHMETIC_EXPR = 'arithmetic_expr', // 算术表达式 (a + b * c)
+  SUBSET_ACCESS = 'subset_access', // [] 数组子集访问
+  NEGATIVE_INDEX = 'negative_index', // -c(...) 负索引
+  NAMESPACE_CALL = 'namespace_call' // package::function 命名空间调用
 }
 
 export interface BlockParam {

@@ -4,7 +4,7 @@ import { useBlockStore } from '../store/useBlockStore';
 import { Copy, Download, Lock, Unlock, RefreshCw } from 'lucide-react';
 
 const CodePreview: React.FC = () => {
-  const { generatedCode, updateCodeAndSync } = useBlockStore();
+  const { generatedCode, updateCodeAndSync, enableCodeNormalization } = useBlockStore();
   const [isEditable, setIsEditable] = useState(false);
   const [localCode, setLocalCode] = useState(generatedCode);
   const syncTimerRef = useRef<NodeJS.Timeout | null>(null); // 同步到积木块的计时器（500ms）
@@ -83,22 +83,28 @@ const CodePreview: React.FC = () => {
         await updateCodeAndSync(currentCode);
         console.log('✅ [CodePreview] 积木块同步完成');
         
-        // 第二步：再等待5秒后，如果用户没有继续编辑，则显示规范化后的代码
+        // 第二步：再等待5秒后，如果用户没有继续编辑，且启用了代码规范化，则显示规范化后的代码
         normalizeTimerRef.current = setTimeout(() => {
           const timeSinceLastEdit = Date.now() - lastEditTimeRef.current;
+          const { enableCodeNormalization: normalizationEnabled } = useBlockStore.getState();
+          
           if (timeSinceLastEdit >= 5000) {
-            console.log('🎨 [CodePreview] 5秒无编辑，准备应用代码规范化');
-            const { generatedCode: updatedCode } = useBlockStore.getState();
-            console.log('📊 [CodePreview] 编辑时的代码长度:', currentCode.length);
-            console.log('📊 [CodePreview] 规范化后代码长度:', updatedCode.length);
-            console.log('📊 [CodePreview] 编辑时代码前100字符:', currentCode.substring(0, 100));
-            console.log('📊 [CodePreview] 规范化后前100字符:', updatedCode.substring(0, 100));
-            console.log('📊 [CodePreview] 代码是否相同:', currentCode === updatedCode);
-            if (currentCode !== updatedCode) {
-              console.log('✅ [CodePreview] 应用规范化代码');
-              setLocalCode(updatedCode);
+            if (normalizationEnabled) {
+              console.log('🎨 [CodePreview] 5秒无编辑，准备应用代码规范化');
+              const { generatedCode: updatedCode } = useBlockStore.getState();
+              console.log('📊 [CodePreview] 编辑时的代码长度:', currentCode.length);
+              console.log('📊 [CodePreview] 规范化后代码长度:', updatedCode.length);
+              console.log('📊 [CodePreview] 编辑时代码前100字符:', currentCode.substring(0, 100));
+              console.log('📊 [CodePreview] 规范化后前100字符:', updatedCode.substring(0, 100));
+              console.log('📊 [CodePreview] 代码是否相同:', currentCode === updatedCode);
+              if (currentCode !== updatedCode) {
+                console.log('✅ [CodePreview] 应用规范化代码');
+                setLocalCode(updatedCode);
+              } else {
+                console.log('⏭️ [CodePreview] 代码已经是规范化的，无需更新');
+              }
             } else {
-              console.log('⏭️ [CodePreview] 代码已经是规范化的，无需更新');
+              console.log('⏭️ [CodePreview] 代码规范化已禁用，保持用户编辑的代码');
             }
           } else {
             console.log('⏭️ [CodePreview] 用户继续编辑了，跳过规范化');
@@ -121,17 +127,24 @@ const CodePreview: React.FC = () => {
       clearTimeout(normalizeTimerRef.current);
     }
     
-    // 立即同步并规范化
+    // 立即同步
     await updateCodeAndSync(codeBeforeSync);
-    console.log('✅ [CodePreview] 手动同步完成，立即应用规范化');
+    console.log('✅ [CodePreview] 手动同步完成');
+    
     // 等待下一个 tick 以获取更新后的 generatedCode
     setTimeout(() => {
-      const { generatedCode: updatedCode } = useBlockStore.getState();
-      console.log('📊 [CodePreview] 规范化后代码长度:', updatedCode.length);
-      console.log('📊 [CodePreview] 同步前代码前100字符:', codeBeforeSync.substring(0, 100));
-      console.log('📊 [CodePreview] 规范化后前100字符:', updatedCode.substring(0, 100));
-      console.log('📊 [CodePreview] 代码是否相同:', codeBeforeSync === updatedCode);
-      setLocalCode(updatedCode);
+      const { generatedCode: updatedCode, enableCodeNormalization: normalizationEnabled } = useBlockStore.getState();
+      
+      if (normalizationEnabled) {
+        console.log('🎨 [CodePreview] 代码规范化已启用，立即应用规范化');
+        console.log('📊 [CodePreview] 规范化后代码长度:', updatedCode.length);
+        console.log('📊 [CodePreview] 同步前代码前100字符:', codeBeforeSync.substring(0, 100));
+        console.log('📊 [CodePreview] 规范化后前100字符:', updatedCode.substring(0, 100));
+        console.log('📊 [CodePreview] 代码是否相同:', codeBeforeSync === updatedCode);
+        setLocalCode(updatedCode);
+      } else {
+        console.log('⏭️ [CodePreview] 代码规范化已禁用，保持用户编辑的代码');
+      }
     }, 0);
   };
   
@@ -191,7 +204,10 @@ const CodePreview: React.FC = () => {
       {isEditable && (
         <div className="code-sync-hint">
           <span className="hint-icon">💡</span>
-          <span>编辑代码后会自动同步到积木块（500ms后），5秒无编辑时自动规范化显示</span>
+          <span>
+            编辑代码后会自动同步到积木块（500ms后）
+            {enableCodeNormalization && '，5秒无编辑时自动规范化显示'}
+          </span>
         </div>
       )}
     </div>

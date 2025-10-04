@@ -231,8 +231,27 @@
 
 .plot-actions {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
+}
+
+.plot-actions .action-left {
+  display: flex;
+  align-items: center;
+}
+
+.plot-actions .action-right {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.plot-info {
+  font-size: var(--font-sm);
+  color: var(--color-gray-600);
+  padding: 0 var(--spacing-md);
 }
 
 .plot-display img {
@@ -307,5 +326,172 @@
   white-space: pre-wrap;
   word-wrap: break-word;
   margin: 0;
+}
+
+/* ========== 设置面板 ========== */
+.settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.settings-panel {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  padding: var(--spacing-2xl);
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.settings-panel h3 {
+  font-size: var(--font-2xl);
+  margin-bottom: var(--spacing-xl);
+  color: var(--color-gray-900);
+}
+
+.setting-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.setting-group label {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--font-md);
+  font-weight: var(--font-medium);
+  color: var(--color-gray-700);
+}
+
+.setting-group input {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-md);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: var(--font-md);
+  transition: var(--transition-all);
+}
+
+.setting-group input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.settings-info {
+  margin: var(--spacing-xl) 0;
+  padding: var(--spacing-lg);
+  background: var(--color-gray-50);
+  border-radius: var(--radius-md);
+}
+
+.settings-info .info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+  font-size: var(--font-md);
+}
+
+.settings-info .info-row:last-child {
+  margin-bottom: 0;
+}
+
+.settings-info .info-row span {
+  color: var(--color-gray-600);
+}
+
+.settings-info .info-row strong {
+  color: var(--color-gray-900);
+}
+
+.settings-info .info-row strong.warning {
+  color: var(--color-warning);
+}
+
+.settings-info .warning-message {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: #fff7ed;
+  border: var(--border-width) solid #fed7aa;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-sm);
+  color: #9a3412;
+}
+
+.settings-presets {
+  margin: var(--spacing-xl) 0;
+}
+
+.settings-presets h4 {
+  font-size: var(--font-md);
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-gray-700);
+}
+
+.settings-presets button {
+  display: block;
+  width: 100%;
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  background: var(--bg-white);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: var(--font-sm);
+  cursor: pointer;
+  transition: var(--transition-all);
+  text-align: left;
+}
+
+.settings-presets button:hover {
+  background: var(--color-gray-100);
+  border-color: var(--color-primary);
+}
+
+.settings-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+}
+
+.settings-actions button {
+  flex: 1;
+  padding: var(--spacing-md);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: var(--font-md);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: var(--transition-all);
+}
+
+.settings-actions .btn-secondary {
+  background: var(--bg-white);
+  color: var(--color-gray-700);
+}
+
+.settings-actions .btn-secondary:hover {
+  background: var(--color-gray-100);
+}
+
+.settings-actions .btn-primary {
+  background: var(--color-primary);
+  color: var(--bg-white);
+  border-color: var(--color-primary);
+}
+
+.settings-actions .btn-primary:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
 }
 

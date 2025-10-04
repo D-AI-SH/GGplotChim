@@ -3,28 +3,22 @@ import { blockDefinitions } from '../data/blockDefinitions';
 
 // 简单的模板引擎
 function renderTemplate(template: string, params: Record<string, any>, childrenCode?: Record<string, string[]>): string {
-  console.log('🔧 Template before processing:', JSON.stringify(template));
   let result = template;
   
   // 处理子积木循环 {{#each children.slotName}}...{{/each}}
   // 注意：必须在替换简单变量之前处理，否则 {{this}} 会被误替换
   result = result.replace(/\{\{#each\s+children\.(\w+)\}\}(.*?)\{\{\/each\}\}/gs, (match, slotName, itemTemplate) => {
     if (childrenCode && childrenCode[slotName]) {
-      console.log('Processing slot:', slotName, 'with codes:', childrenCode[slotName]);
-      console.log('Item template:', JSON.stringify(itemTemplate));
       const generated = childrenCode[slotName]
         .map(code => {
           // 为子代码的每一行添加缩进（跳过空行）
           const indentedCode = code.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n');
           const replaced = itemTemplate.replace(/\{\{this\}\}/g, indentedCode);
-          console.log('Generated line:', JSON.stringify(replaced));
           return replaced;
         })
         .join('\n');
-      console.log('Final generated:', JSON.stringify(generated));
       return generated;
     }
-    console.log('No children code for slot:', slotName);
     return '';
   });
   
@@ -33,21 +27,16 @@ function renderTemplate(template: string, params: Record<string, any>, childrenC
   
   // 🔧 处理嵌套条件语句的辅助函数（递归处理，从内向外）
   const processConditionals = (text: string, depth: number = 0): string => {
-    const indent = '  '.repeat(depth);
     let hasNestedIf = false;
     
     // 检查是否还有嵌套的 {{#if}}
     const nestedIfCount = (text.match(/\{\{#if/g) || []).length;
     if (nestedIfCount > 0) {
-      console.log(`${indent}🔍 [renderTemplate] 深度 ${depth}: 发现 ${nestedIfCount} 个条件语句`);
       hasNestedIf = true;
     }
     
     // 使用非贪婪匹配，找到最内层的 {{#if}}...{{/if}}
     const processed = text.replace(/\{\{#if\s+([\w.]+)\}\}((?:(?!\{\{#if)(?!\{\{\/if\}\}).)*)\{\{\/if\}\}/gs, (match, keyPath, content) => {
-      console.log(`${indent}🔍 [renderTemplate] 深度 ${depth}: 处理条件 {{#if ${keyPath}}}`);
-      console.log(`${indent}🔍 [renderTemplate] 条件内容: ${JSON.stringify(content)}`);
-      
       // 支持嵌套属性访问（如 children.else.length）
       let value: any;
       if (keyPath.includes('.')) {
@@ -57,30 +46,24 @@ function renderTemplate(template: string, params: Record<string, any>, childrenC
         value = params[keyPath];
       }
       
-      console.log(`${indent}🔍 [renderTemplate] 条件值: ${JSON.stringify(value)}`);
-      
       // 对于数组类型，检查是否有非空元素
       let shouldInclude: boolean;
       if (Array.isArray(value)) {
         const nonEmptyElements = value.filter(v => v !== '' && v !== null && v !== undefined);
         shouldInclude = nonEmptyElements.length > 0;
-        console.log(`${indent}🔍 [renderTemplate] 数组条件：原始长度=${value.length}, 非空元素=${nonEmptyElements.length}`);
       } else if (typeof value === 'number') {
         // 对于数字类型（如 length），判断是否 > 0
         shouldInclude = value > 0;
-        console.log(`${indent}🔍 [renderTemplate] 数字条件：值=${value}, 结果=${shouldInclude}`);
       } else {
         shouldInclude = value !== undefined && value !== null && value !== '' && value !== false;
       }
       
       const result = shouldInclude ? content : '';
-      console.log(`${indent}🔍 [renderTemplate] 条件结果 (${shouldInclude ? '真' : '假'}): ${JSON.stringify(result)}`);
       return result;
     });
     
     // 如果还有嵌套的条件语句，继续递归处理
     if (hasNestedIf && processed !== text) {
-      console.log(`${indent}🔁 [renderTemplate] 深度 ${depth}: 递归处理更外层的条件`);
       return processConditionals(processed, depth + 1);
     }
     
@@ -93,11 +76,8 @@ function renderTemplate(template: string, params: Record<string, any>, childrenC
   // 替换简单变量 {{variable}}
   result = result.replace(/\{\{(\w+)\}\}/g, (match, key) => {
     const value = params[key] !== undefined ? String(params[key]) : '';
-    console.log(`🔧 [renderTemplate] 替换变量 {{${key}}} -> ${value}`);
     return value;
   });
-  
-  console.log('✅ [renderTemplate] 处理完成:', result);
   
   return result;
 }
@@ -232,19 +212,14 @@ export function generateRCode(blocks: BlockInstance[]): string {
   const startBlock = blocks.find(b => b.blockType === BlockType.START);
   
   if (!startBlock) {
-    console.log('⚠️ [CodeGen] 未找到开始积木，不生成代码');
     lines.push('# ⚠️ 请添加"开始积木"作为程序入口');
     lines.push('# 只有连接到开始积木的积木才会生成代码');
     lines.push('');
     return lines.join('\n');
   }
   
-  console.log('🚀 [CodeGen] 找到开始积木:', startBlock.id);
-  
   // 从开始积木开始，只处理连接到它的链
   const startBlocks = [startBlock];
-  
-  console.log('📋 [CodeGen] 找到起始积木:', startBlocks.map(b => ({ id: b.id, type: b.blockType })));
   
   // 按执行顺序遍历每个链
   startBlocks.forEach((startBlock, chainIndex) => {
@@ -258,7 +233,6 @@ export function generateRCode(blocks: BlockInstance[]): string {
     
     while (current) {
       if (visited.has(current.id)) {
-        console.warn('⚠️ [CodeGen] 检测到循环引用，跳过积木:', current.id);
         break;
       }
       
@@ -266,7 +240,6 @@ export function generateRCode(blocks: BlockInstance[]): string {
       
       // 跳过已经被嵌入到容器中的积木
       if (current.parentId) {
-        console.log('⏭️ [CodeGen] 跳过容器内积木:', current.id);
         const nextId: string | null = current.connections.output;
         current = nextId ? blocks.find(b => b.id === nextId) : undefined;
         continue;
@@ -274,7 +247,6 @@ export function generateRCode(blocks: BlockInstance[]): string {
       
       // 🔗 检查是否有虚线连接（ggplot 链）
       if (current.ggplotConnections && current.ggplotConnections.length > 0) {
-        console.log('⛓️ [CodeGen] 积木有虚线连接，展开 ggplot 链:', current.id, current.ggplotConnections);
         
         // 生成 ggplot 链（第一个积木 + 所有虚线连接的积木）
         const chainCode: string[] = [];
@@ -311,15 +283,11 @@ export function generateRCode(blocks: BlockInstance[]): string {
         
         // 输出 ggplot 链，使用 + 连接，过滤掉空代码
         const nonEmptyChainCode = chainCode.filter(code => code.trim());
-        console.log('✅ [CodeGen] 生成 ggplot 链，共', nonEmptyChainCode.length, '个积木（过滤后）');
-        console.log(`🔍 [CodeGen] 当前积木 ${current.id} 的 assignedTo:`, current.assignedTo);
         if (nonEmptyChainCode.length > 0) {
           // 检查是否有变量赋值
           const assignment = current.assignedTo ? `${current.assignedTo} <- ` : '';
-          console.log(`📝 [CodeGen] 变量赋值前缀: "${assignment}"`);
           // 第一行不加 +（可能有变量赋值）
           const firstLine = `${assignment}${nonEmptyChainCode[0]}${nonEmptyChainCode.length > 1 ? ' +' : ''}`;
-          console.log(`📝 [CodeGen] 第一行代码: ${firstLine}`);
           lines.push(firstLine);
           // 后续行加缩进和 +
           for (let i = 1; i < nonEmptyChainCode.length; i++) {
@@ -329,7 +297,6 @@ export function generateRCode(blocks: BlockInstance[]): string {
         }
       } else {
         // 普通积木，直接输出
-        console.log('📝 [CodeGen] 生成普通积木代码:', current.id, current.blockType);
         const code = generateBlockCode(current);
         // 🚀 只有当代码非空时才添加到输出
         if (code.trim()) {
@@ -345,11 +312,6 @@ export function generateRCode(blocks: BlockInstance[]): string {
   
   // 🚫 不生成未连接到开始积木的积木
   // 用户需求：手动连接构建代码时，不被链接的积木不进入代码
-  const unconnectedBlocks = blocks.filter(b => !visited.has(b.id) && !b.parentId);
-  if (unconnectedBlocks.length > 0) {
-    console.log('🔍 [CodeGen] 发现未连接到开始积木的积木:', unconnectedBlocks.map(b => ({ id: b.id, type: b.blockType })));
-    console.log('⏭️ [CodeGen] 这些积木不会生成代码');
-  }
   
   lines.push('');
   

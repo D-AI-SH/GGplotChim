@@ -19,6 +19,7 @@ import { parseRCodeToBlocksWithAST } from './astCodeParser';
  * 5. 移除首尾空格
  * 6. 将常见函数的位置参数转换为命名参数（规范化形式）
  * 7. 统一 ggplot2 管道操作符的换行（合并为单行）
+ * 8. 合并多行函数调用为单行
  */
 export function normalizeRCode(code: string): string {
   let normalized = code
@@ -30,25 +31,113 @@ export function normalizeRCode(code: string): string {
       if (line.startsWith('#')) return false;
       return true;
     })
-    // 统一空格
-    .map(line => line.replace(/\s+/g, ' '))
-    // 统一运算符周围的空格：确保 = 周围有空格
-    .map(line => {
-      // 在赋值和参数中添加空格：x=y → x = y
-      // 但要避免处理字符串内部和注释
-      return line
-        .replace(/([a-zA-Z0-9_.])\s*=\s*([a-zA-Z0-9_."(])/g, '$1 = $2')
-        .replace(/,\s*/g, ', '); // 逗号后统一加空格
-    })
     .join('\n');
   
-  // 合并 ggplot2 管道操作符的多行为单行
-  normalized = mergeGgplotPipeLines(normalized);
+  // 🔧 合并所有多行函数调用（包括普通函数和 ggplot 链）
+  normalized = mergeContinuationLines(normalized);
   
   // 规范化常见函数的参数形式
   normalized = normalizeFunctionCalls(normalized);
   
+  // 🔧 统一空格和引号
+  normalized = normalizeWhitespaceAndQuotes(normalized);
+  
   return normalized;
+}
+
+/**
+ * 合并所有续行（包括普通函数调用和 ggplot 链）
+ * 
+ * 规则：
+ * 1. 以 + 或 %>% 结尾的行：合并下一行（ggplot 链）
+ * 2. 括号未闭合的行：合并下一行（多行函数调用）
+ * 3. 以逗号结尾的行：合并下一行（函数参数跨行）
+ * 
+ * 例如：
+ * data.frame(
+ *   x = 1,
+ *   y = 2
+ * )
+ * 
+ * 变为：
+ * data.frame(x = 1, y = 2)
+ */
+function mergeContinuationLines(code: string): string {
+  const lines = code.split('\n');
+  const result: string[] = [];
+  let currentLine = '';
+  let openParens = 0;
+  let openBrackets = 0;
+  let openBraces = 0;
+  let inString = false;
+  let stringChar = '';
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    if (currentLine) {
+      currentLine += ' ' + line;
+    } else {
+      currentLine = line;
+    }
+    
+    // 计算括号平衡（忽略字符串内的括号）
+    for (let j = 0; j < line.length; j++) {
+      const char = line[j];
+      const prevChar = j > 0 ? line[j - 1] : '';
+      
+      // 处理字符串
+      if ((char === '"' || char === "'") && prevChar !== '\\') {
+        if (!inString) {
+          inString = true;
+          stringChar = char;
+        } else if (char === stringChar) {
+          inString = false;
+          stringChar = '';
+        }
+      }
+      
+      // 忽略字符串内的括号
+      if (inString) continue;
+      
+      // 计算括号
+      if (char === '(') openParens++;
+      if (char === ')') openParens--;
+      if (char === '[') openBrackets++;
+      if (char === ']') openBrackets--;
+      if (char === '{') openBraces++;
+      if (char === '}') openBraces--;
+    }
+    
+    // 检查是否需要继续合并下一行
+    const needsContinuation = 
+      currentLine.endsWith('+') ||       // ggplot 链
+      currentLine.endsWith('%>%') ||     // 管道操作符
+      currentLine.endsWith(',') ||       // 参数跨行
+      openParens > 0 ||                  // 括号未闭合
+      openBrackets > 0 ||                // 方括号未闭合
+      openBraces > 0;                    // 花括号未闭合
+    
+    if (!needsContinuation) {
+      // 完整的语句，添加到结果
+      if (currentLine) {
+        result.push(currentLine);
+      }
+      currentLine = '';
+      openParens = 0;
+      openBrackets = 0;
+      openBraces = 0;
+      inString = false;
+      stringChar = '';
+    }
+  }
+  
+  // 添加最后一行（如果有）
+  if (currentLine) {
+    result.push(currentLine);
+  }
+  
+  return result.join('\n');
 }
 
 /**
@@ -62,6 +151,8 @@ export function normalizeRCode(code: string): string {
  * 
  * 变为：
  * p <- ggplot(data, aes(x = x)) + geom_point() + theme_minimal()
+ * 
+ * @deprecated 已被 mergeContinuationLines 替代
  */
 function mergeGgplotPipeLines(code: string): string {
   const lines = code.split('\n');
@@ -104,7 +195,10 @@ function mergeGgplotPipeLines(code: string): string {
  * 将位置参数转换为命名参数（针对我们支持的常见函数）
  */
 function normalizeFunctionCalls(code: string): string {
-  // 规范化 ggsave 函数
+  // 1. 移除命名空间前缀（ggplot2::, dplyr:: 等）
+  code = code.replace(/\b(ggplot2|dplyr|tidyr|tibble)::/g, '');
+  
+  // 2. 规范化 ggsave 函数
   // 可能的形式：
   // 1. ggsave(p, "output.png") - 两个位置参数
   // 2. ggsave(p, file = "output.png") - 混合参数
@@ -156,7 +250,370 @@ function normalizeFunctionCalls(code: string): string {
     }
   );
   
+  // 3. 移除 geom_* 和 stat_* 函数中显式的 mapping = 参数名
+  // 因为 aes() 参数如果是第一个或第二个（在 data 后），默认就是 mapping
+  // 需要使用更智能的解析方式来处理嵌套括号
+  code = normalizeGeomMappingParameter(code);
+  
+  // 4. 统一参数名：colour → color（R 语言中两者是同义词）
+  code = normalizeParameterNames(code);
+  
   return code;
+}
+
+/**
+ * 统一参数名
+ * R 语言中某些参数有多个同义写法，需要统一
+ * 例如：colour 和 color 是同义词
+ */
+function normalizeParameterNames(code: string): string {
+  // 统一 colour → color
+  // 但要避免替换字符串内部的内容
+  let result = '';
+  let inString = false;
+  let stringChar = '';
+  let i = 0;
+  
+  while (i < code.length) {
+    const char = code[i];
+    
+    // 处理字符串
+    if ((char === '"' || char === "'") && (i === 0 || code[i - 1] !== '\\')) {
+      if (!inString) {
+        inString = true;
+        stringChar = char;
+      } else if (char === stringChar) {
+        inString = false;
+        stringChar = '';
+      }
+      result += char;
+      i++;
+      continue;
+    }
+    
+    // 在字符串内部，直接添加
+    if (inString) {
+      result += char;
+      i++;
+      continue;
+    }
+    
+    // 在字符串外部，检查是否匹配 "colour"
+    if (code.substring(i, i + 6) === 'colour') {
+      // 检查前后是否是单词边界
+      const prevChar = i > 0 ? code[i - 1] : '';
+      const nextChar = i + 6 < code.length ? code[i + 6] : '';
+      const isPrevBoundary = !prevChar || /[\s,()=]/.test(prevChar);
+      const isNextBoundary = !nextChar || /[\s,()=]/.test(nextChar);
+      
+      if (isPrevBoundary && isNextBoundary) {
+        result += 'color';
+        i += 6;
+        continue;
+      }
+    }
+    
+    result += char;
+    i++;
+  }
+  
+  return result;
+}
+
+/**
+ * 规范化 geom_* 函数中的 mapping 参数
+ * 移除显式的 mapping = ，因为它是默认参数
+ */
+function normalizeGeomMappingParameter(code: string): string {
+  // 匹配 geom_* 或 stat_* 函数调用
+  const geomPattern = /\b(geom_\w+|stat_\w+)\s*\(/g;
+  let match;
+  let result = '';
+  let lastIndex = 0;
+  
+  while ((match = geomPattern.exec(code)) !== null) {
+    const funcName = match[1];
+    const startPos = match.index;
+    const openParenPos = match.index + match[0].length - 1;
+    
+    // 添加函数名之前的内容
+    result += code.substring(lastIndex, openParenPos + 1);
+    
+    // 找到对应的闭括号
+    const closeParenPos = findMatchingParen(code, openParenPos);
+    if (closeParenPos === -1) {
+      // 如果找不到匹配的括号，保持原样
+      lastIndex = openParenPos + 1;
+      continue;
+    }
+    
+    // 提取参数字符串
+    const argsStr = code.substring(openParenPos + 1, closeParenPos);
+    
+    // 规范化参数
+    const normalizedArgs = normalizeGeomArgs(argsStr);
+    
+    result += normalizedArgs;
+    result += ')';
+    
+    lastIndex = closeParenPos + 1;
+    geomPattern.lastIndex = lastIndex;
+  }
+  
+  // 添加剩余内容
+  result += code.substring(lastIndex);
+  
+  return result;
+}
+
+/**
+ * 规范化 geom 函数的参数列表
+ */
+function normalizeGeomArgs(argsStr: string): string {
+  if (!argsStr.trim()) {
+    return argsStr;
+  }
+  
+  // 解析参数
+  const args = parseArguments(argsStr);
+  const normalizedArgs: string[] = [];
+  
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i].trim();
+    
+    // 移除 mapping = aes(...)
+    if (arg.startsWith('mapping') && arg.includes('=')) {
+      // 提取 aes(...) 部分，需要正确处理嵌套括号
+      const equalPos = arg.indexOf('=');
+      const valueStr = arg.substring(equalPos + 1).trim();
+      
+      // 如果值是 aes(...)，则只保留 aes(...) 部分
+      if (valueStr.startsWith('aes')) {
+        normalizedArgs.push(valueStr);
+        continue;
+      }
+    }
+    
+    // 保留其他参数
+    normalizedArgs.push(arg);
+  }
+  
+  return normalizedArgs.join(', ');
+}
+
+/**
+ * 找到匹配的闭括号位置
+ */
+function findMatchingParen(str: string, openPos: number): number {
+  let depth = 1;
+  let inString = false;
+  let stringChar = '';
+  
+  for (let i = openPos + 1; i < str.length; i++) {
+    const char = str[i];
+    const prevChar = i > 0 ? str[i - 1] : '';
+    
+    // 处理字符串
+    if ((char === '"' || char === "'") && prevChar !== '\\') {
+      if (!inString) {
+        inString = true;
+        stringChar = char;
+      } else if (char === stringChar) {
+        inString = false;
+        stringChar = '';
+      }
+      continue;
+    }
+    
+    if (inString) {
+      continue;
+    }
+    
+    // 处理括号
+    if (char === '(') {
+      depth++;
+    } else if (char === ')') {
+      depth--;
+      if (depth === 0) {
+        return i;
+      }
+    }
+  }
+  
+  return -1; // 没有找到匹配的括号
+}
+
+/**
+ * 统一空格和引号
+ * 1. 移除括号内侧的空格：( x ) → (x)
+ * 2. 移除逗号前的空格，确保逗号后有一个空格：x , y → x, y
+ * 3. 统一运算符周围的空格：x*y → x * y, x=y → x = y
+ * 4. 统一引号：单引号 → 双引号
+ */
+function normalizeWhitespaceAndQuotes(code: string): string {
+  let result = '';
+  let inString = false;
+  let stringChar = '';
+  let escaped = false;
+  
+  for (let i = 0; i < code.length; i++) {
+    const char = code[i];
+    const prevChar = i > 0 ? code[i - 1] : '';
+    const nextChar = i < code.length - 1 ? code[i + 1] : '';
+    
+    if (escaped) {
+      result += char;
+      escaped = false;
+      continue;
+    }
+    
+    if (char === '\\' && inString) {
+      escaped = true;
+      result += char;
+      continue;
+    }
+    
+    // 处理字符串开始/结束
+    if ((char === '"' || char === "'") && !inString) {
+      inString = true;
+      stringChar = char;
+      result += '"'; // 统一使用双引号
+      continue;
+    }
+    
+    if (char === stringChar && inString) {
+      inString = false;
+      stringChar = '';
+      result += '"'; // 统一使用双引号
+      continue;
+    }
+    
+    // 在字符串内部，直接添加
+    if (inString) {
+      result += char;
+      continue;
+    }
+    
+    // === 在字符串外部，进行空格规范化 ===
+    
+    // 1. 移除括号/方括号内侧的空格
+    if ((char === '(' || char === '[') && nextChar === ' ') {
+      result += char;
+      // 跳过后面的空格
+      while (i < code.length - 1 && code[i + 1] === ' ') {
+        i++;
+      }
+      continue;
+    }
+    
+    if ((char === ')' || char === ']') && prevChar === ' ') {
+      // 移除前面的空格
+      while (result.length > 0 && result[result.length - 1] === ' ') {
+        result = result.slice(0, -1);
+      }
+      result += char;
+      continue;
+    }
+    
+    // 2. 规范化逗号：移除逗号前的空格，确保逗号后有一个空格
+    if (char === ',') {
+      // 移除逗号前的空格
+      while (result.length > 0 && result[result.length - 1] === ' ') {
+        result = result.slice(0, -1);
+      }
+      result += ',';
+      
+      // 确保逗号后有且仅有一个空格
+      if (nextChar === ' ') {
+        result += ' ';
+        // 跳过多余的空格
+        while (i < code.length - 1 && code[i + 1] === ' ') {
+          i++;
+        }
+      } else if (nextChar && nextChar !== ')' && nextChar !== ']' && nextChar !== '\n') {
+        result += ' ';
+      }
+      continue;
+    }
+    
+    // 3. 统一运算符周围的空格
+    // 二元运算符：*, /, +, -
+    if (char === '*' || char === '/' || char === '+') {
+      // 移除运算符前的多余空格
+      while (result.length > 0 && result[result.length - 1] === ' ') {
+        result = result.slice(0, -1);
+      }
+      result += ' ' + char;
+      
+      // 确保运算符后有空格
+      if (nextChar === ' ') {
+        result += ' ';
+        while (i < code.length - 1 && code[i + 1] === ' ') {
+          i++;
+        }
+      } else if (nextChar && nextChar !== ' ' && nextChar !== '\n') {
+        result += ' ';
+      }
+      continue;
+    }
+    
+    // - 运算符需要特殊处理（可能是负号）
+    if (char === '-') {
+      // 检查是否是负号
+      const isNegative = !prevChar || prevChar === '(' || prevChar === '[' || 
+                        prevChar === ',' || prevChar === ' ' || prevChar === '=';
+      
+      if (isNegative) {
+        // 作为负号，不加空格
+        result += char;
+      } else {
+        // 作为减法运算符，加空格
+        while (result.length > 0 && result[result.length - 1] === ' ') {
+          result = result.slice(0, -1);
+        }
+        result += ' ' + char;
+        
+        if (nextChar === ' ') {
+          result += ' ';
+          while (i < code.length - 1 && code[i + 1] === ' ') {
+            i++;
+          }
+        } else if (nextChar && nextChar !== ' ' && nextChar !== '\n') {
+          result += ' ';
+        }
+      }
+      continue;
+    }
+    
+    // = 运算符（避免处理 ==, !=, <=, >=）
+    if (char === '=') {
+      const prevNonSpace = result.trimEnd().slice(-1);
+      if (prevNonSpace !== '=' && prevNonSpace !== '<' && prevNonSpace !== '>' && prevNonSpace !== '!' &&
+          nextChar !== '=') {
+        // 移除 = 前的多余空格
+        while (result.length > 0 && result[result.length - 1] === ' ') {
+          result = result.slice(0, -1);
+        }
+        result += ' ' + char;
+        
+        // 确保 = 后有空格
+        if (nextChar === ' ') {
+          result += ' ';
+          while (i < code.length - 1 && code[i + 1] === ' ') {
+            i++;
+          }
+        } else if (nextChar && nextChar !== ' ' && nextChar !== '\n') {
+          result += ' ';
+        }
+        continue;
+      }
+    }
+    
+    // 其他字符直接添加
+    result += char;
+  }
+  
+  return result;
 }
 
 /**

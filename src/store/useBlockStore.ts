@@ -27,6 +27,11 @@ interface BlockStore {
   isWebRReady: boolean; // WebR 是否完全就绪（初始化完成）
   webRInitProgress: string; // WebR 初始化进度描述
   
+  // R 包管理
+  selectedPackages: string[]; // 用户选择要安装的包
+  installedPackages: string[]; // 已安装的包
+  isInstallingPackages: boolean; // 是否正在安装包
+  
   // 双向同步控制
   syncSource: 'blocks' | 'code' | null; // 当前同步源，防止循环更新
   
@@ -35,6 +40,11 @@ interface BlockStore {
   
   // 代码规范化
   enableCodeNormalization: boolean; // 是否启用代码规范化（默认 true）
+  
+  // 图片导出设置
+  plotWidth: number; // 图片宽度（英寸）
+  plotHeight: number; // 图片高度（英寸）
+  plotDPI: number; // 图片 DPI
   
   // Actions
   addBlock: (block: BlockInstance) => void;
@@ -58,6 +68,10 @@ interface BlockStore {
   setWebRInitProgress: (progress: string) => void;
   setIsDeveloperMode: (enabled: boolean) => void;
   setEnableCodeNormalization: (enabled: boolean) => void;
+  setPlotSettings: (width: number, height: number, dpi: number) => void;
+  setSelectedPackages: (packages: string[]) => void;
+  setInstalledPackages: (packages: string[]) => void;
+  setIsInstallingPackages: (isInstalling: boolean) => void;
   clearAll: () => void;
 }
 
@@ -76,6 +90,12 @@ export const useBlockStore = create<BlockStore>((set, get) => ({
   syncSource: null,
   isDeveloperMode: false,
   enableCodeNormalization: true, // 默认启用代码规范化
+  plotWidth: 20, // 默认 20 英寸
+  plotHeight: 20, // 默认 20 英寸
+  plotDPI: 720, // 默认 720 DPI
+  selectedPackages: ['ggplot2'], // 默认选择 ggplot2
+  installedPackages: [],
+  isInstallingPackages: false,
   
   addBlock: (block) => set((state) => ({
     blocks: [...state.blocks, block]
@@ -134,6 +154,9 @@ export const useBlockStore = create<BlockStore>((set, get) => ({
     console.log('\n🔄 [Store] updateCodeAndSync 被调用');
     console.log('📝 [Store] 用户编辑的代码长度:', code.length);
     console.log('📝 [Store] 用户编辑的代码前200字符:', code.substring(0, 200));
+    
+    // 保存原始代码，以便在禁用规范化时使用
+    const originalCode = code;
     
     // 防止循环更新：如果当前同步源是积木块，则不执行代码到积木的同步
     const currentState = get();
@@ -319,9 +342,10 @@ export const useBlockStore = create<BlockStore>((set, get) => ({
         // 不规范化，保持用户编辑的代码
         console.log('⏭️ [Store] 跳过代码规范化，保持用户编辑的代码');
         
-        // 只更新积木块，不更新代码
+        // 更新积木块，并保持用户的原始代码
         set({
           blocks: mergedBlocks,
+          generatedCode: originalCode,
           syncSource: 'code'
         });
         
@@ -351,6 +375,18 @@ export const useBlockStore = create<BlockStore>((set, get) => ({
   setIsDeveloperMode: (enabled) => set({ isDeveloperMode: enabled }),
   
   setEnableCodeNormalization: (enabled) => set({ enableCodeNormalization: enabled }),
+  
+  setPlotSettings: (width, height, dpi) => set({ 
+    plotWidth: width, 
+    plotHeight: height, 
+    plotDPI: dpi 
+  }),
+  
+  setSelectedPackages: (packages) => set({ selectedPackages: packages }),
+  
+  setInstalledPackages: (packages) => set({ installedPackages: packages }),
+  
+  setIsInstallingPackages: (isInstalling) => set({ isInstallingPackages: isInstalling }),
   
   clearAll: () => set({
     blocks: [],
