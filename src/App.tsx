@@ -5,15 +5,17 @@ import PreviewPanel from './components/PreviewPanel';
 import DeveloperPanel from './components/DeveloperPanel';
 import DeveloperMode from './components/DeveloperMode';
 import RPackageSelector from './components/RPackageSelector';
+import TemplateSelector from './components/TemplateSelector';
 import { BlockDefinition } from './types/blocks';
 import { useBlockStore } from './store/useBlockStore';
-import { Trash2, Download, Upload } from 'lucide-react';
+import { Trash2, Download, Upload, FileCode } from 'lucide-react';
 import { webRRunner } from './core/rRunner/webRRunner';
 
 const App: React.FC = () => {
   const canvasRef = React.useRef<any>(null);
   const { clearAll, isWebRReady, webRInitProgress, isDeveloperMode, selectedPackages } = useBlockStore();
   const [showPackageSelector, setShowPackageSelector] = useState(true);
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [initStarted, setInitStarted] = useState(false);
   
   // 当用户确认包选择后，开始初始化 WebR
@@ -58,8 +60,17 @@ const App: React.FC = () => {
     alert('项目导入功能开发中...');
   };
   
+  const handleOpenTemplates = () => {
+    setShowTemplateSelector(true);
+  };
+  
   return (
     <div className="app">
+      {/* 模板选择器 */}
+      {showTemplateSelector && (
+        <TemplateSelector onClose={() => setShowTemplateSelector(false)} />
+      )}
+      
       {/* WebR 包选择界面 */}
       {showPackageSelector && !isWebRReady && (
         <div className="webr-loading-overlay">
@@ -93,6 +104,10 @@ const App: React.FC = () => {
         </div>
         
         <div className="header-actions">
+          <button className="header-btn template-btn" onClick={handleOpenTemplates} title="选择代码模板">
+            <FileCode size={18} />
+            模板
+          </button>
           <button className="header-btn" onClick={handleImport} title="导入项目">
             <Upload size={18} />
             导入

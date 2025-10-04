@@ -2,6 +2,7 @@
 @import './variables.css';
 @import './animations.css';
 @import './utilities.css';
+@import './TemplateSelector.css';
 
 /* ========== 全局样式 ========== */
 * {
@@ -191,6 +192,17 @@ body {
 .header-btn.developer-active:hover {
   background: rgba(34, 197, 94, 0.4);
   border-color: #22c55e;
+}
+
+.header-btn.template-btn {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(37, 99, 235, 0.3) 100%);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.header-btn.template-btn:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.5) 0%, rgba(37, 99, 235, 0.5) 100%);
+  border-color: rgba(59, 130, 246, 0.8);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 /* ========== 主体区域 ========== */
