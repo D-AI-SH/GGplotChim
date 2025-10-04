@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import BlockPalette from './components/BlockPalette';
 import Canvas from './components/Canvas';
 import PreviewPanel from './components/PreviewPanel';
-import ReversibilityTester from './components/ReversibilityTester';
+import DeveloperPanel from './components/DeveloperPanel';
+import DeveloperMode from './components/DeveloperMode';
 import { BlockDefinition } from './types/blocks';
 import { useBlockStore } from './store/useBlockStore';
 import { Trash2, Download, Upload } from 'lucide-react';
@@ -10,7 +11,7 @@ import { webRRunner } from './core/rRunner/webRRunner';
 
 const App: React.FC = () => {
   const canvasRef = React.useRef<any>(null);
-  const { clearAll, isWebRReady, webRInitProgress } = useBlockStore();
+  const { clearAll, isWebRReady, webRInitProgress, isDeveloperMode } = useBlockStore();
   
   // 在应用启动时立即初始化 WebR
   useEffect(() => {
@@ -88,6 +89,7 @@ const App: React.FC = () => {
             <Trash2 size={18} />
             清空
           </button>
+          <DeveloperMode />
         </div>
       </header>
       
@@ -103,6 +105,13 @@ const App: React.FC = () => {
         <div className="main-right">
           <PreviewPanel />
         </div>
+        
+        {/* 开发者面板 - 右侧纵向栏，仅在开发者模式下显示 */}
+        {isWebRReady && isDeveloperMode && (
+          <div className="main-developer">
+            <DeveloperPanel webR={webRRunner.getWebR()} />
+          </div>
+        )}
       </main>
       
       <footer className="app-footer">
@@ -121,9 +130,6 @@ const App: React.FC = () => {
           GGplotChim v1.0.0 | 基于 React 18 + TypeScript
         </p>
       </footer>
-      
-      {/* 可逆性测试面板 */}
-      {isWebRReady && <ReversibilityTester webR={webRRunner.getWebR()} />}
     </div>
   );
 };

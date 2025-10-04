@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>开发者模式测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4f46e5;
+        }
+        .test-step {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+        .expected {
+            background: #d1fae5;
+            border-color: #10b981;
+            color: #065f46;
+        }
+        .warning {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            color: #92400e;
+        }
+        code {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        .button-demo {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button-demo:hover {
+            background: #3730a3;
+        }
+        .button-demo.developer-active {
+            background: #22c55e;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 开发者模式功能测试</h1>
+    
+    <div class="test-section">
+        <h2>功能概述</h2>
+        <p>开发者模式功能已成功添加到 GGplotChim 应用中，包含以下特性：</p>
+        <ul>
+            <li>右上角的开发者模式按钮</li>
+            <li>密钥验证功能（密钥：<code>daish</code>）</li>
+            <li>可逆性测试仅在开发者模式下显示</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>测试步骤</h2>
+        
+        <div class="test-step">
+            <h3>1. 启动应用</h3>
+            <p>运行 <code>npm start</code> 启动开发服务器</p>
+            <p>访问 <code>http://localhost:3000</code></p>
+        </div>
+
+        <div class="test-step">
+            <h3>2. 查找开发者模式按钮</h3>
+            <p>在页面右上角应该能看到一个"开发者"按钮</p>
+            <button class="button-demo">🔒 开发者</button>
+            <p>按钮应该显示锁定图标和"开发者"文字</p>
+        </div>
+
+        <div class="test-step">
+            <h3>3. 点击开发者模式按钮</h3>
+            <p>点击按钮后应该弹出密钥输入对话框</p>
+            <p>对话框包含：</p>
+            <ul>
+                <li>标题："开发者模式"</li>
+                <li>说明文字</li>
+                <li>密码输入框</li>
+                <li>取消和确认按钮</li>
+            </ul>
+        </div>
+
+        <div class="test-step">
+            <h3>4. 测试密钥验证</h3>
+            <p><strong>正确密钥：</strong>输入 <code>daish</code> 应该成功进入开发者模式</p>
+            <p><strong>错误密钥：</strong>输入其他内容应该显示"密钥错误，请重新输入"</p>
+            <p><strong>空密钥：</strong>确认按钮应该被禁用</p>
+        </div>
+
+        <div class="test-step expected">
+            <h3>5. 验证开发者模式状态</h3>
+            <p>成功输入正确密钥后：</p>
+            <ul>
+                <li>按钮图标变为解锁状态</li>
+                <li>按钮样式变为绿色高亮</li>
+                <li>按钮文字仍显示"开发者"</li>
+            </ul>
+            <button class="button-demo developer-active">🔓 开发者</button>
+        </div>
+
+        <div class="test-step expected">
+            <h3>6. 验证可逆性测试显示</h3>
+            <p>在开发者模式下：</p>
+            <ul>
+                <li>页面右下角应该显示"🧪 测试可逆性"按钮</li>
+                <li>点击按钮可以打开可逆性测试面板</li>
+            </ul>
+        </div>
+
+        <div class="test-step">
+            <h3>7. 退出开发者模式</h3>
+            <p>再次点击开发者模式按钮应该直接退出开发者模式</p>
+            <p>退出后：</p>
+            <ul>
+                <li>按钮恢复为锁定状态</li>
+                <li>可逆性测试按钮消失</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section warning">
+        <h2>⚠️ 注意事项</h2>
+        <ul>
+            <li>密钥是硬编码的 <code>daish</code>，仅用于演示</li>
+            <li>可逆性测试功能需要 WebR 初始化完成</li>
+            <li>开发者模式状态不会持久化，刷新页面后会重置</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 预期结果</h2>
+        <p>所有测试步骤都应该正常工作，开发者模式功能完整实现：</p>
+        <ul>
+            <li>✅ 右上角开发者模式按钮</li>
+            <li>✅ 密钥验证对话框</li>
+            <li>✅ 正确的密钥验证逻辑</li>
+            <li>✅ 开发者模式状态切换</li>
+            <li>✅ 可逆性测试的条件显示</li>
+        </ul>
+    </div>
+
+    <script>
+        // 简单的演示脚本
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🧪 开发者模式测试页面已加载');
+            console.log('📋 请按照上述步骤测试开发者模式功能');
+        });
+    </script>
+</body>
+</html>

@@ -30,6 +30,9 @@ interface BlockStore {
   // 双向同步控制
   syncSource: 'blocks' | 'code' | null; // 当前同步源，防止循环更新
   
+  // 开发者模式
+  isDeveloperMode: boolean; // 是否启用开发者模式
+  
   // Actions
   addBlock: (block: BlockInstance) => void;
   removeBlock: (blockId: string) => void;
@@ -50,6 +53,7 @@ interface BlockStore {
   setIsWebRInitialized: (initialized: boolean) => void;
   setIsWebRReady: (ready: boolean) => void;
   setWebRInitProgress: (progress: string) => void;
+  setIsDeveloperMode: (enabled: boolean) => void;
   clearAll: () => void;
 }
 
@@ -66,6 +70,7 @@ export const useBlockStore = create<BlockStore>((set, get) => ({
   isWebRReady: false,
   webRInitProgress: '准备初始化...',
   syncSource: null,
+  isDeveloperMode: false,
   
   addBlock: (block) => set((state) => ({
     blocks: [...state.blocks, block]
@@ -315,6 +320,8 @@ export const useBlockStore = create<BlockStore>((set, get) => ({
   setIsWebRReady: (ready) => set({ isWebRReady: ready }),
   
   setWebRInitProgress: (progress) => set({ webRInitProgress: progress }),
+  
+  setIsDeveloperMode: (enabled) => set({ isDeveloperMode: enabled }),
   
   clearAll: () => set({
     blocks: [],
