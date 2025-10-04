@@ -10,8 +10,8 @@ interface BlockNodeProps {
   onClick: (e: React.MouseEvent) => void;
   onDelete: (blockId: string) => void;
   onMouseDown?: (e: React.MouseEvent) => void;
-  onConnectionStart?: (blockId: string, type: 'input' | 'output', e?: React.MouseEvent) => void;
-  onConnectionEnd?: (blockId: string, type: 'input' | 'output') => void;
+  onConnectionStart?: (blockId: string, type: 'input' | 'output' | 'bodyInput' | 'bodyOutput', e?: React.MouseEvent) => void;
+  onConnectionEnd?: (blockId: string, type: 'input' | 'output' | 'bodyInput' | 'bodyOutput') => void;
   onDropToSlot?: (slotName: string, draggedBlockId: string) => void;
   isDragging?: boolean;
   isSelected?: boolean;
@@ -37,7 +37,7 @@ const BlockNode: React.FC<BlockNodeProps> = ({
     return blockDefinitions.find(def => def.type === blockType);
   };
   
-  const handleConnectionStart = (e: React.MouseEvent, type: 'input' | 'output') => {
+  const handleConnectionStart = (e: React.MouseEvent, type: 'input' | 'output' | 'bodyInput' | 'bodyOutput') => {
     e.stopPropagation();
     e.preventDefault();
     if (onConnectionStart) {
@@ -45,7 +45,7 @@ const BlockNode: React.FC<BlockNodeProps> = ({
     }
   };
   
-  const handleConnectionEnd = (e: React.MouseEvent, type: 'input' | 'output') => {
+  const handleConnectionEnd = (e: React.MouseEvent, type: 'input' | 'output' | 'bodyInput' | 'bodyOutput') => {
     e.stopPropagation();
     e.preventDefault();
     if (onConnectionEnd) {
@@ -119,6 +119,17 @@ const BlockNode: React.FC<BlockNodeProps> = ({
                 className={`block-slot ${isDropTarget ? 'drop-target' : ''}`}
               >
                 <div className="slot-label">{slot.label}</div>
+                
+                {/* 循环体输入连接点 */}
+                <div 
+                  className="connection-point connection-body-input"
+                  onMouseDown={(e) => handleConnectionStart(e, 'bodyInput')}
+                  onMouseUp={(e) => handleConnectionEnd(e, 'bodyInput')}
+                  title="循环体输入 - 连接到循环体第一个积木"
+                >
+                  <Circle size={10} fill={block.connections.bodyInput ? definition.color : 'white'} />
+                </div>
+                
                 <div className="slot-drop-zone">
                   {childrenIds.length === 0 ? (
                     <>
@@ -159,6 +170,16 @@ const BlockNode: React.FC<BlockNodeProps> = ({
                       )}
                     </div>
                   )}
+                </div>
+                
+                {/* 循环体输出连接点 */}
+                <div 
+                  className="connection-point connection-body-output"
+                  onMouseDown={(e) => handleConnectionStart(e, 'bodyOutput')}
+                  onMouseUp={(e) => handleConnectionEnd(e, 'bodyOutput')}
+                  title="循环体输出 - 连接到循环体最后一个积木"
+                >
+                  <Circle size={10} fill={block.connections.bodyOutput ? definition.color : 'white'} />
                 </div>
               </div>
             );

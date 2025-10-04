@@ -15,6 +15,7 @@ export enum BlockCategory {
 
 export enum BlockType {
   // 0. R语言基础语句
+  START = 'start', // 程序开始积木
   LIBRARY = 'library',
   PRINT = 'print',
   ASSIGN = 'assign',
@@ -41,6 +42,7 @@ export enum BlockType {
   GEOM_SMOOTH = 'geom_smooth',
   GEOM_TEXT = 'geom_text',
   GEOM_AREA = 'geom_area',
+  GEOM_SEGMENT = 'geom_segment',
   
   // 4. 标度 (Scales)
   SCALE_X_CONTINUOUS = 'scale_x_continuous',
@@ -49,11 +51,13 @@ export enum BlockType {
   SCALE_FILL_MANUAL = 'scale_fill_manual',
   SCALE_COLOR_BREWER = 'scale_color_brewer',
   SCALE_FILL_GRADIENT = 'scale_fill_gradient',
+  SCALE_FILL_VIRIDIS = 'scale_fill_viridis',
   
   // 5. 坐标系 (Coordinates)
   COORD_FLIP = 'coord_flip',
   COORD_CARTESIAN = 'coord_cartesian',
   COORD_POLAR = 'coord_polar',
+  YLIM = 'ylim',
   
   // 6. 分面 (Facets)
   FACET_WRAP = 'facet_wrap',
@@ -77,7 +81,19 @@ export enum BlockType {
   THEME_LIGHT = 'theme_light',
   THEME_DARK = 'theme_dark',
   THEME_VOID = 'theme_void',
-  THEME = 'theme'
+  THEME = 'theme',
+  
+  // 10. 其他
+  GGSAVE = 'ggsave',
+  ANNOTATE = 'annotate',
+  GATHER = 'gather',
+  ARRANGE = 'arrange',
+  MUTATE = 'mutate',
+  SUMMARIZE = 'summarize',
+  GROUP_BY = 'group_by',
+  ROWWISE = 'rowwise',
+  UNIT = 'unit',
+  ELEMENT_BLANK = 'element_blank'
 }
 
 export interface BlockParam {
@@ -118,6 +134,9 @@ export interface BlockInstance {
   connections: {
     input: string | null;  // 输入连接的积木 ID（上一个积木）- 实线，代表执行顺序
     output: string | null; // 输出连接的积木 ID（只能连接一个积木，串行）- 实线，代表执行顺序
+    // 🔧 容器型积木的额外连接点（循环体/分支体的输入输出）
+    bodyInput?: string | null;  // 容器体内第一个积木的 ID
+    bodyOutput?: string | null; // 容器体内最后一个积木的 ID
   };
   ggplotConnections?: string[]; // ggplot + 连接的积木 ID 列表 - 虚线，代表组合关系（Shift+拖拽创建）
   order: number; // 在图层链中的顺序（0 为起始积木）

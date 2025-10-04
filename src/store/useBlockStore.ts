@@ -183,6 +183,9 @@ export const useBlockStore = create<BlockStore>((set, get) => ({
         const mergedBlocks: BlockInstance[] = [];
         const usedExistingIds = new Set<string>();
         
+        // 第一步：匹配积木并建立 ID 映射
+        const idMapping = new Map<string, string>(); // newId -> existingId
+        
         parsedBlocks.forEach((newBlock: BlockInstance, index: number) => {
           // 查找最佳匹配的现有积木
           let bestMatch: BlockInstance | undefined;
@@ -224,18 +227,62 @@ export const useBlockStore = create<BlockStore>((set, get) => ({
           });
           
           if (bestMatch && bestScore >= 100) {
-            // 找到匹配的积木 - 保留ID、位置和连接，更新参数
+            // 找到匹配的积木 - 记录 ID 映射
             console.log(`  ✅ [Store] 积木 ${index} 找到匹配:`, bestMatch.id, '分数:', bestScore);
             usedExistingIds.add(bestMatch.id);
+            idMapping.set(newBlock.id, bestMatch.id);
             mergedBlocks.push({
               ...bestMatch,
               params: { ...bestMatch.params, ...newBlock.params }
             });
           } else {
-            // 没有匹配 - 创建新积木
+            // 没有匹配 - 创建新积木（保持新ID）
             console.log(`  🆕 [Store] 积木 ${index} 无匹配，创建新积木:`, newBlock.blockType);
             mergedBlocks.push(newBlock);
           }
+        });
+        
+        // 第二步：更新所有积木的连接，将临时 ID 映射到实际 ID
+        console.log('🔗 [Store] 更新连接中的 ID 映射...');
+        mergedBlocks.forEach((block, index) => {
+          const parsedBlock = parsedBlocks[index];
+          if (!parsedBlock) return;
+          
+          const updatedConnections = { ...parsedBlock.connections };
+          
+          // 映射 input 连接
+          if (updatedConnections.input) {
+            const mappedId = idMapping.get(updatedConnections.input);
+            if (mappedId) {
+              console.log(`    🔄 [Store] 映射 input: ${updatedConnections.input} -> ${mappedId}`);
+              updatedConnections.input = mappedId;
+            }
+          }
+          
+          // 映射 output 连接
+          if (updatedConnections.output) {
+            const mappedId = idMapping.get(updatedConnections.output);
+            if (mappedId) {
+              console.log(`    🔄 [Store] 映射 output: ${updatedConnections.output} -> ${mappedId}`);
+              updatedConnections.output = mappedId;
+            }
+          }
+          
+          // 映射 ggplotConnections 数组
+          if (parsedBlock.ggplotConnections && parsedBlock.ggplotConnections.length > 0) {
+            const updatedGgplotConnections = parsedBlock.ggplotConnections.map(connectionId => {
+              const mappedId = idMapping.get(connectionId);
+              if (mappedId) {
+                console.log(`    🔄 [Store] 映射 ggplotConnections: ${connectionId} -> ${mappedId}`);
+                return mappedId;
+              }
+              return connectionId;
+            });
+            block.ggplotConnections = updatedGgplotConnections;
+          }
+          
+          // 更新积木的连接
+          block.connections = updatedConnections;
         });
         
         console.log('🎯 [Store] 合并完成，最终积木数量:', mergedBlocks.length);

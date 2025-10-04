@@ -16,7 +16,7 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
   const [draggingBlockId, setDraggingBlockId] = useState<string | null>(null);
   const [nearestSnapTarget, setNearestSnapTarget] = useState<{ blockId: string; type: 'input' | 'output' } | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
-  const [connectingFrom, setConnectingFrom] = useState<{ blockId: string; type: 'input' | 'output'; isGgplotConnection?: boolean } | null>(null);
+  const [connectingFrom, setConnectingFrom] = useState<{ blockId: string; type: 'input' | 'output' | 'bodyInput' | 'bodyOutput'; isGgplotConnection?: boolean } | null>(null);
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
   const lastUpdateTime = useRef<number>(0);
   const updateThrottle = 16; // 约 60fps
@@ -674,7 +674,7 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
   const [oldConnection, setOldConnection] = useState<{ sourceId: string; targetId: string } | null>(null);
   
   // 开始连接
-  const handleConnectionStart = useCallback((blockId: string, type: 'input' | 'output', e?: React.MouseEvent) => {
+  const handleConnectionStart = useCallback((blockId: string, type: 'input' | 'output' | 'bodyInput' | 'bodyOutput', e?: React.MouseEvent) => {
     const block = blocks.find(b => b.id === blockId);
     if (!block) return;
     
@@ -688,7 +688,7 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
       return;
     }
     
-    // 普通拖拽：创建实线连接（执行顺序）
+    // 普通拖拽：创建实线连接（执行顺序）或虚线引用（bodyInput/bodyOutput）
     // 记录旧连接并断开
     if (type === 'output' && block.connections.output) {
       // 从输出点拉线，记录旧的输出连接
@@ -718,13 +718,23 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
         updateBlock(updatedSource.id, updatedSource);
         updateBlock(updatedTarget.id, updatedTarget);
       }
+    } else if (type === 'bodyInput' && block.connections.bodyInput) {
+      // 从 bodyInput 点拉线，断开旧连接
+      updateBlock(blockId, {
+        connections: { ...block.connections, bodyInput: null }
+      });
+    } else if (type === 'bodyOutput' && block.connections.bodyOutput) {
+      // 从 bodyOutput 点拉线，断开旧连接
+      updateBlock(blockId, {
+        connections: { ...block.connections, bodyOutput: null }
+      });
     }
     
     setConnectingFrom({ blockId, type, isGgplotConnection: false });
   }, [blocks, updateBlock]);
   
   // 完成连接
-  const handleConnectionEnd = useCallback((targetBlockId: string, targetType: 'input' | 'output') => {
+  const handleConnectionEnd = useCallback((targetBlockId: string, targetType: 'input' | 'output' | 'bodyInput' | 'bodyOutput') => {
     if (!connectingFrom) return;
     
     const sourceBlock = blocks.find(b => b.id === connectingFrom.blockId);
@@ -752,7 +762,33 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
       return;
     }
     
-    // 只允许 output -> input 的连接（实线，执行顺序）
+    // 🔵 处理 bodyInput 和 bodyOutput 连接（虚线引用）
+    if (connectingFrom.type === 'bodyInput') {
+      // bodyInput 指向循环体的第一个积木
+      console.log('✅ [Canvas] 连接 bodyInput:', sourceBlock.id, '->', targetBlock.id);
+      updateBlock(sourceBlock.id, {
+        connections: { ...sourceBlock.connections, bodyInput: targetBlock.id }
+      });
+      setConnectingFrom(null);
+      setOldConnection(null);
+      setMousePos(null);
+      return;
+    }
+    
+    if (connectingFrom.type === 'bodyOutput') {
+      // bodyOutput 指向循环体的最后一个积木
+      console.log('✅ [Canvas] 连接 bodyOutput:', sourceBlock.id, '->', targetBlock.id);
+      updateBlock(sourceBlock.id, {
+        connections: { ...sourceBlock.connections, bodyOutput: targetBlock.id }
+      });
+      setConnectingFrom(null);
+      setOldConnection(null);
+      setMousePos(null);
+      return;
+    }
+    
+    // 🔴 处理实线连接（执行顺序）
+    // 只允许 output -> input 的连接
     if (connectingFrom.type === 'output' && targetType === 'input') {
       const { source, target } = connectBlocks(sourceBlock, targetBlock);
       
@@ -994,7 +1030,7 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
   };
 
   // 获取连接点的实际位置（SVG坐标系）
-  const getConnectionPoint = (blockId: string, type: 'input' | 'output'): { x: number; y: number } | null => {
+  const getConnectionPoint = (blockId: string, type: 'input' | 'output' | 'bodyInput' | 'bodyOutput'): { x: number; y: number } | null => {
     const block = blocks.find(b => b.id === blockId);
     if (!block) return null;
     
@@ -1055,13 +1091,45 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
         x: relativeX + blockRect.width / 2,
         y: relativeY
       };
-    } else {
+    } else if (type === 'output') {
       // 输出点在积木底部中心
       return {
         x: relativeX + blockRect.width / 2,
         y: relativeY + blockRect.height
       };
+    } else if (type === 'bodyInput') {
+      // bodyInput 点在插槽顶部（试图找到实际的连接点元素）
+      const bodyInputElement = blockElement.querySelector('.connection-body-input') as HTMLElement;
+      if (bodyInputElement) {
+        const pointRect = bodyInputElement.getBoundingClientRect();
+        return {
+          x: pointRect.left - canvasRect.left + scrollLeft + pointRect.width / 2,
+          y: pointRect.top - canvasRect.top + scrollTop + pointRect.height / 2
+        };
+      }
+      // 备用方案：估算位置
+      return {
+        x: relativeX + blockRect.width / 2,
+        y: relativeY + 60 // 估算的插槽顶部位置
+      };
+    } else if (type === 'bodyOutput') {
+      // bodyOutput 点在插槽底部
+      const bodyOutputElement = blockElement.querySelector('.connection-body-output') as HTMLElement;
+      if (bodyOutputElement) {
+        const pointRect = bodyOutputElement.getBoundingClientRect();
+        return {
+          x: pointRect.left - canvasRect.left + scrollLeft + pointRect.width / 2,
+          y: pointRect.top - canvasRect.top + scrollTop + pointRect.height / 2
+        };
+      }
+      // 备用方案：估算位置
+      return {
+        x: relativeX + blockRect.width / 2,
+        y: relativeY + blockRect.height - 20 // 估算的插槽底部位置
+      };
     }
+    
+    return null;
   };
   
   // 计算SVG画布所需的最小尺寸
@@ -1155,13 +1223,6 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
         const endX = endPoint.x;
         const endY = endPoint.y;
 
-        // DEBUG: 输出连接点位置
-        console.log(`[Connection] ${block.id} -> ${targetBlock.id}:`, {
-          start: { x: startX, y: startY },
-          end: { x: endX, y: endY },
-          sourceParent: block.parentId,
-          targetParent: targetBlock.parentId
-        });
 
         // 计算贝塞尔曲线的控制点
         const controlOffset = Math.abs(endY - startY) * 0.5;
@@ -1240,6 +1301,65 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
             />
           );
         });
+      }
+      
+      // 🔵 渲染 bodyInput 和 bodyOutput 虚线连接（引用关系）
+      if (block.connections.bodyInput) {
+        const targetBlock = blocks.find(b => b.id === block.connections.bodyInput);
+        if (targetBlock) {
+          const definition = blockDefinitions.find(d => d.type === block.blockType);
+          const color = definition?.color || '#4f46e5';
+          
+          // 获取连接点位置
+          const startPoint = getConnectionPoint(block.id, 'bodyInput');
+          const endPoint = getConnectionPoint(targetBlock.id, 'input');
+          
+          if (startPoint && endPoint) {
+            const pathD = `M ${startPoint.x} ${startPoint.y} L ${endPoint.x} ${endPoint.y}`;
+            
+            connections.push(
+              <path
+                key={`body-input-${block.id}`}
+                d={pathD}
+                stroke={color}
+                strokeWidth="2"
+                strokeDasharray="4,4"
+                fill="none"
+                className="connection-line connection-line-body-input"
+                opacity="0.6"
+              />
+            );
+          }
+        }
+      }
+      
+      if (block.connections.bodyOutput) {
+        const targetBlock = blocks.find(b => b.id === block.connections.bodyOutput);
+        if (targetBlock) {
+          const definition = blockDefinitions.find(d => d.type === block.blockType);
+          const color = definition?.color || '#4f46e5';
+          
+          // 获取连接点位置
+          const startPoint = getConnectionPoint(targetBlock.id, 'output');
+          const endPoint = getConnectionPoint(block.id, 'bodyOutput');
+          
+          if (startPoint && endPoint) {
+            const pathD = `M ${startPoint.x} ${startPoint.y} L ${endPoint.x} ${endPoint.y}`;
+            
+            connections.push(
+              <path
+                key={`body-output-${block.id}`}
+                d={pathD}
+                stroke={color}
+                strokeWidth="2"
+                strokeDasharray="4,4"
+                fill="none"
+                className="connection-line connection-line-body-output"
+                opacity="0.6"
+              />
+            );
+          }
+        }
       }
     });
     

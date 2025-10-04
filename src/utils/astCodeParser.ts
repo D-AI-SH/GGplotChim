@@ -274,6 +274,134 @@ function flattenGgplotChain(node: any, blockIdCounter: { value: number }): Block
 }
 
 /**
+ * 展开代码块（{ ... }）中的语句为积木数组
+ * 用于处理 for 循环体、if 语句体等
+ */
+function flattenCodeBlock(node: any, blockIdCounter: { value: number }): BlockInstance[] {
+  if (!node) {
+    return [];
+  }
+  
+  console.log('  📦 [flattenCodeBlock] 解析代码块，类型:', node.type, '函数名:', node.function_name);
+  
+  // 🔧 特殊处理：for 循环（需要递归展开）
+  if (node.type === 'call' && node.function_name === 'for') {
+    console.log('  🔄 [flattenCodeBlock] 检测到嵌套 for 循环');
+    const forBlock = astNodeToBlock(node, blockIdCounter);
+    if (!forBlock) return [];
+    
+    forBlock.children = { body: [] };
+    const allBlocks: BlockInstance[] = [forBlock];
+    
+    // 展开循环体
+    const loopBody = node.arguments?._pos_3;
+    if (loopBody) {
+      const bodyBlocks = flattenCodeBlock(loopBody, blockIdCounter);
+      
+      // 🔍 只将直接子积木添加到 children.body（不包括孙积木）
+      for (const bodyBlock of bodyBlocks) {
+        // 如果这个积木没有父积木，说明它是直接子积木
+        if (!bodyBlock.parentId) {
+          bodyBlock.parentId = forBlock.id;
+          bodyBlock.slotName = 'body';
+          forBlock.children!.body.push(bodyBlock.id);
+        }
+      }
+      
+      console.log(`  ✅ [flattenCodeBlock] 嵌套 for 循环包含 ${forBlock.children!.body.length} 个直接子积木，共 ${bodyBlocks.length} 个积木（含孙积木）`);
+      
+      // 🔧 返回 for 积木和所有子孙积木
+      allBlocks.push(...bodyBlocks);
+    }
+    
+    return allBlocks;
+  }
+  
+  // 🔧 特殊处理：if 语句（需要递归展开）
+  if (node.type === 'call' && node.function_name === 'if') {
+    console.log('  ❓ [flattenCodeBlock] 检测到嵌套 if 语句');
+    console.log('  ❓ [flattenCodeBlock] if 节点参数:', Object.keys(node.arguments || {}));
+    
+    const ifBlock = astNodeToBlock(node, blockIdCounter);
+    if (!ifBlock) return [];
+    
+    ifBlock.children = { then: [], else: [] };
+    const allBlocks: BlockInstance[] = [ifBlock];
+    
+    // 展开 then 分支
+    const thenBody = node.arguments?._pos_2;
+    if (thenBody) {
+      console.log(`  ✅ [flattenCodeBlock] 开始展开 then 分支，类型: ${thenBody.type}, 函数名: ${thenBody.function_name}`);
+      const thenBlocks = flattenCodeBlock(thenBody, blockIdCounter);
+      
+      // 🔍 只将直接子积木添加到 children.then
+      for (const thenBlock of thenBlocks) {
+        if (!thenBlock.parentId) {
+          thenBlock.parentId = ifBlock.id;
+          thenBlock.slotName = 'then';
+          ifBlock.children!.then.push(thenBlock.id);
+        }
+      }
+      
+      console.log(`  ✅ [flattenCodeBlock] 嵌套 if-then 分支包含 ${ifBlock.children!.then.length} 个直接子积木，共 ${thenBlocks.length} 个积木（含孙积木）`);
+      allBlocks.push(...thenBlocks);
+    }
+    
+    // 展开 else 分支
+    const elseBody = node.arguments?._pos_3;
+    if (elseBody) {
+      console.log(`  ❎ [flattenCodeBlock] 开始展开 else 分支，类型: ${elseBody.type}, 函数名: ${elseBody.function_name}`);
+      const elseBlocks = flattenCodeBlock(elseBody, blockIdCounter);
+      
+      // 🔍 只将直接子积木添加到 children.else
+      for (const elseBlock of elseBlocks) {
+        if (!elseBlock.parentId) {
+          elseBlock.parentId = ifBlock.id;
+          elseBlock.slotName = 'else';
+          ifBlock.children!.else.push(elseBlock.id);
+        }
+      }
+      
+      console.log(`  ❎ [flattenCodeBlock] 嵌套 if-else 分支包含 ${ifBlock.children!.else.length} 个直接子积木，共 ${elseBlocks.length} 个积木（含孙积木）`);
+      allBlocks.push(...elseBlocks);
+    } else {
+      console.log(`  ❎ [flattenCodeBlock] if 语句没有 else 分支`);
+    }
+    
+    // 🔧 返回 if 积木和所有子孙积木
+    console.log(`  ✅ [flattenCodeBlock] if 语句展开完成，返回 ${allBlocks.length} 个积木`);
+    return allBlocks;
+  }
+  
+  // 如果是单个表达式（不是代码块），直接转换
+  if (node.type !== 'call' || node.function_name !== '{') {
+    const block = astNodeToBlock(node, blockIdCounter);
+    return block ? [block] : [];
+  }
+  
+  // 如果是代码块 {...}，展开所有语句
+  const blocks: BlockInstance[] = [];
+  const args = node.arguments || {};
+  
+  // 遍历所有位置参数（_pos_1, _pos_2, ...）
+  let i = 1;
+  while (args[`_pos_${i}`]) {
+    const statement = args[`_pos_${i}`];
+    console.log(`  📝 [flattenCodeBlock] 处理语句 ${i}:`, statement.type, statement.function_name);
+    
+    // 递归处理可能的嵌套容器（for/if）
+    const statementBlocks = flattenCodeBlock(statement, blockIdCounter);
+    blocks.push(...statementBlocks);
+    console.log(`  ✅ [flattenCodeBlock] 语句 ${i} 生成了 ${statementBlocks.length} 个积木`);
+    
+    i++;
+  }
+  
+  console.log(`  ✅ [flattenCodeBlock] 代码块展开完成，共 ${blocks.length} 个积木`);
+  return blocks;
+}
+
+/**
  * 将AST节点转换为积木块
  */
 function astNodeToBlock(node: any, blockIdCounter: { value: number }): BlockInstance | null {
@@ -288,8 +416,18 @@ function astNodeToBlock(node: any, blockIdCounter: { value: number }): BlockInst
   
   // 处理调用表达式
   if (node.type === 'call') {
-    const funcName = node.function_name;
+    let funcName = node.function_name;
     const args = node.arguments || {};
+    
+    // 🔧 处理 :: 操作符（函数名是数组的情况，如 ['::', 'ggplot2', 'annotate']）
+    if (Array.isArray(funcName) && funcName.length === 3 && funcName[0] === '::') {
+      funcName = `${funcName[1]}::${funcName[2]}`;
+      console.log('  🔧 [astNodeToBlock] 转换 :: 操作符函数名:', funcName);
+    } else if (Array.isArray(funcName)) {
+      // 其他数组情况，记录警告
+      console.warn('  ⚠️ [astNodeToBlock] 函数名是数组:', funcName);
+      funcName = String(funcName);
+    }
     
     console.log('  📞 [astNodeToBlock] 函数调用:', funcName);
     
@@ -300,12 +438,34 @@ function astNodeToBlock(node: any, blockIdCounter: { value: number }): BlockInst
     }
     
     // 🔧 特殊处理：赋值语句 (<- 操作符)
-    if (funcName === '<-' || funcName === '=') {
+    // 包括普通赋值和索引赋值 ([<-, [[<-, $<-)
+    if (funcName === '<-' || funcName === '=' || funcName === '[<-' || funcName === '[[<-' || funcName === '$<-') {
       console.log(`  ✏️ [astNodeToBlock] 检测到赋值语句 (${funcName})`);
-      const varName = extractValue(args._pos_1);
-      const value = extractValue(args._pos_2);
+      console.log(`  📊 [astNodeToBlock] args._pos_1:`, JSON.stringify(args._pos_1, null, 2));
+      console.log(`  📊 [astNodeToBlock] args._pos_2:`, JSON.stringify(args._pos_2, null, 2));
+      if (args._pos_3) {
+        console.log(`  📊 [astNodeToBlock] args._pos_3:`, JSON.stringify(args._pos_3, null, 2));
+      }
       
-      console.log(`  📝 [astNodeToBlock] 赋值: ${varName} ${funcName} ${value}`);
+      const varName = extractValue(args._pos_1);
+      const value = funcName.includes('[') || funcName === '$<-' 
+        ? extractValue(args._pos_3)  // 索引赋值：args._pos_2是索引，args._pos_3是值
+        : extractValue(args._pos_2); // 普通赋值
+      
+      // 对于索引赋值，重新构建完整的左侧表达式
+      let fullVarName = varName;
+      if (funcName === '[<-' && args._pos_2) {
+        const index = extractValue(args._pos_2);
+        fullVarName = `${varName}[${index}]`;
+      } else if (funcName === '[[<-' && args._pos_2) {
+        const index = extractValue(args._pos_2);
+        fullVarName = `${varName}[[${index}]]`;
+      } else if (funcName === '$<-' && args._pos_2) {
+        const field = extractValue(args._pos_2);
+        fullVarName = `${varName}$${field}`;
+      }
+      
+      console.log(`  📝 [astNodeToBlock] 赋值: ${fullVarName} <- ${value}`);
       
       // 检查是否是数据导入（变量名为 'data'）
       if (varName === 'data') {
@@ -329,7 +489,7 @@ function astNodeToBlock(node: any, blockIdCounter: { value: number }): BlockInst
         blockType: BlockType.ASSIGN,
         position: { x: 100, y: 100 },
         params: {
-          variable: varName,
+          variable: fullVarName,
           value: value
         },
         connections: { input: null, output: null },
@@ -342,7 +502,7 @@ function astNodeToBlock(node: any, blockIdCounter: { value: number }): BlockInst
       console.log('  🔄 [astNodeToBlock] 检测到 for 循环');
       const loopVar = extractValue(args._pos_1);
       const loopRange = extractValue(args._pos_2);
-      // 注意：循环体 (args._pos_3) 需要特殊处理，暂时不解析
+      // 注意：循环体 (args._pos_3) 在主解析函数中被展开处理
       
       console.log(`  📝 [astNodeToBlock] for循环: for(${loopVar} in ${loopRange})`);
       
@@ -387,13 +547,28 @@ function astNodeToBlock(node: any, blockIdCounter: { value: number }): BlockInst
     if (!blockType) {
       // 未知函数，创建通用函数调用块
       console.log('  ⚠️ [astNodeToBlock] 未知函数，创建FUNCTION_CALL积木');
+      
+      // 🔧 将AST参数转换为R代码字符串，而不是JSON
+      const argStrings: string[] = [];
+      for (const [key, value] of Object.entries(args)) {
+        const argValue = extractValue(value as any);
+        if (key.startsWith('_pos_')) {
+          // 位置参数
+          argStrings.push(argValue);
+        } else {
+          // 命名参数
+          argStrings.push(`${key} = ${argValue}`);
+        }
+      }
+      const argsString = argStrings.join(', ');
+      
       return {
         id: `block-${blockIdCounter.value++}`,
         blockType: BlockType.FUNCTION_CALL,
         position: { x: 100, y: 100 },
         params: {
           function_name: funcName,
-          args: JSON.stringify(args)
+          args: argsString
         },
         connections: { input: null, output: null },
         order: 0
@@ -424,6 +599,22 @@ function astNodeToBlock(node: any, blockIdCounter: { value: number }): BlockInst
 function extractParams(blockType: BlockType, astArgs: any): Record<string, any> {
   const params: Record<string, any> = {};
   
+  // 🔧 特殊处理：theme() 函数需要将所有参数组合成一个 custom 字符串
+  if (blockType === BlockType.THEME) {
+    const argStrings: string[] = [];
+    for (const [key, value] of Object.entries(astArgs)) {
+      if (!value) continue;
+      const argValue = extractValue(value as any);
+      if (key.startsWith('_pos_')) {
+        argStrings.push(argValue);
+      } else {
+        argStrings.push(`${key} = ${argValue}`);
+      }
+    }
+    params.custom = argStrings.join(', ');
+    return params;
+  }
+  
   for (const [key, value] of Object.entries(astArgs)) {
     if (!value) continue;
     
@@ -434,13 +625,67 @@ function extractParams(blockType: BlockType, astArgs: any): Record<string, any> 
       const posIndex = parseInt(key.replace('_pos_', ''));
       
       // 根据blockType决定位置参数的含义
+      // 特定函数的第一个参数映射
       if (blockType === BlockType.LIBRARY && posIndex === 1) {
         params.package = extractValue(argValue);
       } else if (blockType === BlockType.GGPLOT_INIT && posIndex === 1) {
         params.data = extractValue(argValue);
       } else if (blockType === BlockType.PRINT && posIndex === 1) {
         params.value = extractValue(argValue);
+      } 
+      // geom_* 函数的第一个参数通常是 mapping (aes) 或 data
+      else if (posIndex === 1 && (
+        blockType === BlockType.GEOM_POINT ||
+        blockType === BlockType.GEOM_LINE ||
+        blockType === BlockType.GEOM_BAR ||
+        blockType === BlockType.GEOM_COL ||
+        blockType === BlockType.GEOM_HISTOGRAM ||
+        blockType === BlockType.GEOM_BOXPLOT ||
+        blockType === BlockType.GEOM_SMOOTH ||
+        blockType === BlockType.GEOM_TEXT ||
+        blockType === BlockType.GEOM_AREA ||
+        blockType === BlockType.GEOM_SEGMENT
+      )) {
+        // 对于 geom_segment，第一个参数可能是 data 或 mapping
+        if (argValue.type === 'call' && argValue.function_name === 'aes') {
+          params.mapping = extractValue(argValue);
+        } else {
+          params.data = extractValue(argValue);
+        }
       }
+      // annotate 函数的第一个参数是 geom 类型（字符串）
+      else if (blockType === BlockType.ANNOTATE && posIndex === 1) {
+        params.geom = extractValue(argValue);
+      }
+      // ggsave 函数的第一个参数是 plot 对象
+      else if (blockType === BlockType.GGSAVE && posIndex === 1) {
+        params.plot = extractValue(argValue);
+      }
+      // ylim 函数的参数是两个数值（最小值和最大值）
+      else if (blockType === BlockType.YLIM) {
+        if (posIndex === 1) {
+          params.min = extractValue(argValue);
+        } else if (posIndex === 2) {
+          params.max = extractValue(argValue);
+        }
+      }
+      // gather 函数的参数处理
+      else if (blockType === BlockType.GATHER) {
+        if (posIndex === 1) {
+          params.key = extractValue(argValue);
+        } else if (posIndex === 2) {
+          params.value = extractValue(argValue);
+        }
+      }
+      // unit 函数的参数
+      else if (blockType === BlockType.UNIT) {
+        if (posIndex === 1) {
+          params.values = extractValue(argValue);
+        } else if (posIndex === 2) {
+          params.units = extractValue(argValue);
+        }
+      }
+      // 其他位置参数暂时忽略（可以根据需要扩展）
     } else {
       // 命名参数
       params[key] = extractValue(argValue);
@@ -458,7 +703,33 @@ function extractValue(node: any): string {
   if (!node) return '';
   
   if (node.type === 'literal') {
-    return node.value || '';
+    const value = node.value || '';
+    const literalClass = node.class;
+    
+    // 🔧 特殊处理：NA 在R中是一个特殊的逻辑常量，值为 "NA"
+    if (value === 'NA' || value === 'NA_integer_' || value === 'NA_real_' || value === 'NA_character_' || value === 'NA_complex_') {
+      return value === 'NA' || !value ? 'NA' : value;
+    }
+    
+    // 根据字面量类型决定是否添加引号
+    if (literalClass === 'character') {
+      // 字符串需要添加引号（使用双引号）
+      // 但要避免为空字符串添加引号后变成 ""
+      return value ? `"${value}"` : '""';
+    } else if (literalClass === 'logical') {
+      // 逻辑值保持大写（TRUE/FALSE）
+      // NA 也是逻辑类型，但已经在上面处理了
+      return value || 'NA';
+    } else if (value === 'NULL' || value === 'NaN' || value === 'Inf' || value === '-Inf') {
+      // 其他特殊值保持原样
+      return value;
+    } else if (!value && literalClass === 'logical') {
+      // 空值且是逻辑类型 -> NA
+      return 'NA';
+    } else {
+      // 数值类型直接返回
+      return value || '0';
+    }
   }
   
   if (node.type === 'symbol') {
@@ -466,11 +737,58 @@ function extractValue(node: any): string {
   }
   
   if (node.type === 'call') {
-    // 🔧 改进：递归构建完整的函数调用表达式
     const funcName = node.function_name || '';
     const args = node.arguments || {};
     
-    // 构建参数列表
+    // 🔧 特殊处理：R中的中缀运算符
+    // 这些运算符在AST中被解析为函数调用，但应该还原为中缀形式
+    const infixOperators = [
+      ':', '+', '-', '*', '/', '^', '%%', '%/%',  // 算术运算符
+      '==', '!=', '<', '>', '<=', '>=',           // 比较运算符
+      '&', '|', '&&', '||',                       // 逻辑运算符
+      '%>%', '%in%', '%*%',                       // 特殊中缀运算符
+      '$', '[', '[[',                             // 索引运算符
+      '::', ':::', '@',                           // 命名空间和slot访问运算符
+    ];
+    
+    if (infixOperators.includes(funcName)) {
+      // 对于中缀运算符，使用中缀形式
+      const argValues: string[] = [];
+      
+      // 收集位置参数
+      for (const [key, value] of Object.entries(args)) {
+        if (key.startsWith('_pos_')) {
+          argValues.push(extractValue(value));
+        }
+      }
+      
+      // 特殊处理不同的中缀运算符
+      if (funcName === '$' && argValues.length === 2) {
+        return `${argValues[0]}$${argValues[1]}`;
+      } else if (funcName === '@' && argValues.length === 2) {
+        // S4对象的slot访问
+        return `${argValues[0]}@${argValues[1]}`;
+      } else if (funcName === '[' && argValues.length >= 2) {
+        // data[1] or data[1, 2]
+        return `${argValues[0]}[${argValues.slice(1).join(', ')}]`;
+      } else if (funcName === '[[' && argValues.length >= 2) {
+        // data[[1]]
+        return `${argValues[0]}[[${argValues.slice(1).join(', ')}]]`;
+      } else if (argValues.length === 2) {
+        // 标准二元中缀运算符
+        // 特殊处理：某些运算符不需要空格
+        if (funcName === ':' || funcName === '::' || funcName === ':::') {
+          return `${argValues[0]}${funcName}${argValues[1]}`;
+        }
+        // 其他运算符在两侧添加空格
+        return `${argValues[0]} ${funcName} ${argValues[1]}`;
+      } else if (argValues.length === 1 && (funcName === '+' || funcName === '-')) {
+        // 一元运算符
+        return `${funcName}${argValues[0]}`;
+      }
+    }
+    
+    // 普通函数调用：构建参数列表
     const argStrings: string[] = [];
     for (const [key, value] of Object.entries(args)) {
       const argValue = extractValue(value);
@@ -491,7 +809,26 @@ function extractValue(node: any): string {
     return node.deparse;
   }
   
-  return node.value || JSON.stringify(node);
+  // 🚨 未处理的节点类型 - 记录警告并尝试最佳猜测
+  console.warn('⚠️ [extractValue] 遇到未处理的节点类型:', node.type, node);
+  
+  // 如果节点有 deparse 属性，优先使用它
+  if (node.deparse) {
+    console.log('✅ [extractValue] 使用deparse:', node.deparse);
+    return node.deparse;
+  }
+  
+  // 最后的fallback：返回value
+  if (node.value !== undefined && node.value !== null) {
+    console.log('✅ [extractValue] 使用value:', node.value);
+    return String(node.value);
+  }
+  
+  // 🚨 绝对不能返回JSON！这会导致代码完全错误
+  // 作为最后的手段，返回一个占位符，让用户知道这里有问题
+  console.error('❌ [extractValue] 无法处理节点类型:', node.type);
+  console.error('❌ [extractValue] 节点内容:', JSON.stringify(node, null, 2));
+  return '<UNPARSEABLE_EXPRESSION>';
 }
 
 /**
@@ -512,15 +849,18 @@ function matchBlockType(functionName: string): BlockType | null {
     'geom_smooth': BlockType.GEOM_SMOOTH,
     'geom_text': BlockType.GEOM_TEXT,
     'geom_area': BlockType.GEOM_AREA,
+    'geom_segment': BlockType.GEOM_SEGMENT,
     'scale_x_continuous': BlockType.SCALE_X_CONTINUOUS,
     'scale_y_continuous': BlockType.SCALE_Y_CONTINUOUS,
     'scale_color_manual': BlockType.SCALE_COLOR_MANUAL,
     'scale_fill_manual': BlockType.SCALE_FILL_MANUAL,
     'scale_color_brewer': BlockType.SCALE_COLOR_BREWER,
     'scale_fill_gradient': BlockType.SCALE_FILL_GRADIENT,
+    'scale_fill_viridis': BlockType.SCALE_FILL_VIRIDIS,
     'coord_flip': BlockType.COORD_FLIP,
     'coord_cartesian': BlockType.COORD_CARTESIAN,
     'coord_polar': BlockType.COORD_POLAR,
+    'ylim': BlockType.YLIM,
     'facet_wrap': BlockType.FACET_WRAP,
     'facet_grid': BlockType.FACET_GRID,
     'stat_summary': BlockType.STAT_SUMMARY,
@@ -537,6 +877,17 @@ function matchBlockType(functionName: string): BlockType | null {
     'theme_dark': BlockType.THEME_DARK,
     'theme_void': BlockType.THEME_VOID,
     'theme': BlockType.THEME,
+    'ggsave': BlockType.GGSAVE,
+    'annotate': BlockType.ANNOTATE,
+    'ggplot2::annotate': BlockType.ANNOTATE,
+    'gather': BlockType.GATHER,
+    'arrange': BlockType.ARRANGE,
+    'mutate': BlockType.MUTATE,
+    'summarize': BlockType.SUMMARIZE,
+    'group_by': BlockType.GROUP_BY,
+    'rowwise': BlockType.ROWWISE,
+    'unit': BlockType.UNIT,
+    'element_blank': BlockType.ELEMENT_BLANK,
   };
   
   return functionToBlockType[functionName] || null;
@@ -591,6 +942,18 @@ export async function parseRCodeToBlocksWithAST(
     
     console.log(`📊 [AST解析器] 成功解析，共 ${ast.length} 个AST节点`);
     
+    // 🚀 首先添加 START 积木（程序入口）
+    const startBlock: BlockInstance = {
+      id: `block-${blockIdCounter.value++}`,
+      blockType: BlockType.START,
+      position: { x: 100, y: 100 },
+      params: {},
+      connections: { input: null, output: null },
+      order: 0
+    };
+    blocks.push(startBlock);
+    console.log('🚀 [AST解析器] 自动添加 START 积木:', startBlock.id);
+    
     // 遍历AST并转换为积木
     // 使用两列布局：左侧普通积木（实线连接），右侧 ggplot 链（虚线连接）
     const LEFT_COLUMN_X = 100;   // 左列 X 坐标
@@ -598,7 +961,9 @@ export async function parseRCodeToBlocksWithAST(
     const INITIAL_Y = 100;       // 初始 Y 坐标
     const VERTICAL_SPACING = 40; // 积木之间的垂直间距
     
-    let leftColumnY = INITIAL_Y;  // 左列当前 Y 位置
+    // START 积木占用第一个位置
+    const startBlockHeight = estimateBlockHeight(startBlock);
+    let leftColumnY = INITIAL_Y + startBlockHeight + VERTICAL_SPACING;  // 左列当前 Y 位置（从START之后开始）
     let rightColumnY = INITIAL_Y; // 右列当前 Y 位置
     
     for (let i = 0; i < ast.length; i++) {
@@ -666,7 +1031,147 @@ export async function parseRCodeToBlocksWithAST(
             console.log(`✅ [AST解析器] 链式调用解析完成：ggplot在左列，${chainBlocks.length - 1}个图层在右列，右列下一个位置: ${rightColumnY}px`);
           }
         }
-      } else {
+      }
+      // 🔄 特殊处理：for 循环（需要展开循环体）
+      else if (node.type === 'call' && node.function_name === 'for') {
+        console.log('🔄 [AST解析器] 检测到 for 循环，展开循环体');
+        
+        // 创建 for 循环控制积木
+        const forBlock = astNodeToBlock(node, blockIdCounter);
+        if (forBlock) {
+          forBlock.position.x = LEFT_COLUMN_X;
+          forBlock.position.y = leftColumnY;
+          
+          // 🔧 初始化 children 对象
+          forBlock.children = { body: [] };
+          
+          blocks.push(forBlock);
+          
+          const forBlockHeight = estimateBlockHeight(forBlock);
+          leftColumnY += forBlockHeight + VERTICAL_SPACING;
+          console.log(`  📏 for 循环积木 ${forBlock.id} 位置: (${forBlock.position.x}, ${forBlock.position.y}), 高度: ${forBlockHeight}px`);
+          
+          // 展开循环体
+          const loopBody = node.arguments?._pos_3;
+          if (loopBody) {
+            console.log('  📦 [AST解析器] 开始展开 for 循环体');
+            const bodyBlocks = flattenCodeBlock(loopBody, blockIdCounter);
+            
+            console.log(`  📦 [AST解析器] 循环体包含 ${bodyBlocks.length} 个积木`);
+            
+            // 将循环体内的积木添加到容器内
+            for (const bodyBlock of bodyBlocks) {
+              // 🔍 只将直接子积木添加到 children.body（不包括孙积木）
+              if (!bodyBlock.parentId) {
+                bodyBlock.parentId = forBlock.id;
+                bodyBlock.slotName = 'body';
+                forBlock.children!.body.push(bodyBlock.id);
+              }
+              
+              // 📌 所有积木（包括孙积木）都要添加到 blocks 数组中
+              
+              // 位置设置为相对于父积木的偏移（在渲染时会被调整）
+              bodyBlock.position.x = LEFT_COLUMN_X + 30; // 缩进
+              bodyBlock.position.y = leftColumnY;
+              
+              blocks.push(bodyBlock);
+              
+              const bodyBlockHeight = estimateBlockHeight(bodyBlock);
+              leftColumnY += bodyBlockHeight + VERTICAL_SPACING;
+              console.log(`  📏 循环体积木 ${bodyBlock.id} (${bodyBlock.blockType}) 位置: (${bodyBlock.position.x}, ${bodyBlock.position.y}), 高度: ${bodyBlockHeight}px, 父积木: ${bodyBlock.parentId || '无'}`);
+            }
+            
+            console.log(`✅ [AST解析器] for 循环 ${forBlock.id} 包含 ${forBlock.children!.body.length} 个直接子积木（共 ${bodyBlocks.length} 个积木含孙积木）:`, forBlock.children!.body);
+          }
+        }
+      }
+      // ❓ 特殊处理：if 语句（需要展开 then 和 else 分支）
+      else if (node.type === 'call' && node.function_name === 'if') {
+        console.log('❓ [AST解析器] 检测到 if 语句，展开 then/else 分支');
+        
+        // 创建 if 控制积木
+        const ifBlock = astNodeToBlock(node, blockIdCounter);
+        if (ifBlock) {
+          ifBlock.position.x = LEFT_COLUMN_X;
+          ifBlock.position.y = leftColumnY;
+          
+          // 🔧 初始化 children 对象
+          ifBlock.children = { then: [], else: [] };
+          
+          blocks.push(ifBlock);
+          
+          const ifBlockHeight = estimateBlockHeight(ifBlock);
+          leftColumnY += ifBlockHeight + VERTICAL_SPACING;
+          console.log(`  📏 if 语句积木 ${ifBlock.id} 位置: (${ifBlock.position.x}, ${ifBlock.position.y}), 高度: ${ifBlockHeight}px`);
+          
+          // 展开 then 分支 (_pos_2)
+          const thenBody = node.arguments?._pos_2;
+          if (thenBody) {
+            console.log('  ✅ [AST解析器] 开始展开 if-then 分支');
+            const thenBlocks = flattenCodeBlock(thenBody, blockIdCounter);
+            
+            console.log(`  ✅ [AST解析器] then 分支包含 ${thenBlocks.length} 个积木`);
+            
+            // 将 then 分支内的积木添加到容器内
+            for (const thenBlock of thenBlocks) {
+              // 🔍 只将直接子积木添加到 children.then（不包括孙积木）
+              if (!thenBlock.parentId) {
+                thenBlock.parentId = ifBlock.id;
+                thenBlock.slotName = 'then';
+                ifBlock.children!.then.push(thenBlock.id);
+              }
+              
+              // 📌 所有积木（包括孙积木）都要添加到 blocks 数组中
+              
+              // 位置设置为相对于父积木的偏移（在渲染时会被调整）
+              thenBlock.position.x = LEFT_COLUMN_X + 30; // 缩进
+              thenBlock.position.y = leftColumnY;
+              
+              blocks.push(thenBlock);
+              
+              const thenBlockHeight = estimateBlockHeight(thenBlock);
+              leftColumnY += thenBlockHeight + VERTICAL_SPACING;
+              console.log(`  📏 then 分支积木 ${thenBlock.id} (${thenBlock.blockType}) 位置: (${thenBlock.position.x}, ${thenBlock.position.y}), 高度: ${thenBlockHeight}px, 父积木: ${thenBlock.parentId || '无'}`);
+            }
+            
+            console.log(`✅ [AST解析器] if-then 分支 ${ifBlock.id} 包含 ${ifBlock.children!.then.length} 个直接子积木（共 ${thenBlocks.length} 个积木含孙积木）:`, ifBlock.children!.then);
+          }
+          
+          // 展开 else 分支 (_pos_3)，如果存在
+          const elseBody = node.arguments?._pos_3;
+          if (elseBody) {
+            console.log('  ❎ [AST解析器] 开始展开 if-else 分支');
+            const elseBlocks = flattenCodeBlock(elseBody, blockIdCounter);
+            
+            console.log(`  ❎ [AST解析器] else 分支包含 ${elseBlocks.length} 个积木`);
+            
+            // 将 else 分支内的积木添加到容器内
+            for (const elseBlock of elseBlocks) {
+              // 🔍 只将直接子积木添加到 children.else（不包括孙积木）
+              if (!elseBlock.parentId) {
+                elseBlock.parentId = ifBlock.id;
+                elseBlock.slotName = 'else';
+                ifBlock.children!.else.push(elseBlock.id);
+              }
+              
+              // 📌 所有积木（包括孙积木）都要添加到 blocks 数组中
+              
+              // 位置设置为相对于父积木的偏移（在渲染时会被调整）
+              elseBlock.position.x = LEFT_COLUMN_X + 30; // 缩进
+              elseBlock.position.y = leftColumnY;
+              
+              blocks.push(elseBlock);
+              
+              const elseBlockHeight = estimateBlockHeight(elseBlock);
+              leftColumnY += elseBlockHeight + VERTICAL_SPACING;
+              console.log(`  📏 else 分支积木 ${elseBlock.id} (${elseBlock.blockType}) 位置: (${elseBlock.position.x}, ${elseBlock.position.y}), 高度: ${elseBlockHeight}px, 父积木: ${elseBlock.parentId || '无'}`);
+            }
+            
+            console.log(`✅ [AST解析器] if-else 分支 ${ifBlock.id} 包含 ${ifBlock.children!.else.length} 个直接子积木（共 ${elseBlocks.length} 个积木含孙积木）:`, ifBlock.children!.else);
+          }
+        }
+      }
+      else {
         // 普通单个积木放在左列
         const block = astNodeToBlock(node, blockIdCounter);
         if (block) {
@@ -717,6 +1222,13 @@ export async function parseRCodeToBlocksWithAST(
     
     for (let i = 0; i < blocks.length; i++) {
       const block = blocks[i];
+      
+      // 🚫 跳过子积木（它们通过 children 属性嵌套在父积木内部，不应参与顶层的执行顺序连接）
+      if (block.parentId !== undefined) {
+        console.log(`  ⏭️ 跳过子积木: ${block.id} (${block.blockType})，父积木: ${block.parentId}`);
+        continue;
+      }
+      
       const isChainFirst = ggplotChainFirstBlocks.has(block.id);
       const isInChain = ggplotChainBlockIds.has(block.id);
       const isChainMember = isInChain && !isChainFirst;

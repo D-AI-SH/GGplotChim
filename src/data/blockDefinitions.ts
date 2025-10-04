@@ -4,6 +4,17 @@ import { BlockDefinition, BlockType, BlockCategory } from '../types/blocks';
 export const blockDefinitions: BlockDefinition[] = [
   // ========== 0. R语言基础语句 (Base) ==========
   {
+    id: 'start',
+    type: BlockType.START,
+    category: BlockCategory.BASE,
+    label: '🚀 开始',
+    description: '程序开始（主程序入口）',
+    color: '#22c55e',
+    params: [],
+    rTemplate: '' // START积木不生成任何代码，只作为逻辑入口
+  },
+  
+  {
     id: 'library',
     type: BlockType.LIBRARY,
     category: BlockCategory.BASE,
@@ -123,9 +134,14 @@ export const blockDefinitions: BlockDefinition[] = [
         name: 'then',
         label: '那么执行',
         allowMultiple: true
+      },
+      {
+        name: 'else',
+        label: '否则执行',
+        allowMultiple: true
       }
     ],
-    rTemplate: 'if ({{condition}}) {\n{{#each children.then}}{{this}}{{/each}}\n}'
+    rTemplate: 'if ({{condition}}) {\n{{#each children.then}}{{this}}{{/each}}{{#if children.else.length}}\n} else {\n{{#each children.else}}{{this}}{{/each}}{{/if}}\n}'
   },
   
   {
@@ -408,13 +424,19 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       },
       {
+        name: 'alpha',
+        type: 'text',
+        label: 'alpha',
+        required: false
+      },
+      {
         name: 'width',
         type: 'text',
         label: 'width',
         required: false
       }
     ],
-    rTemplate: 'geom_bar({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if stat}}{{#if mapping}}, {{/if}}stat = "{{stat}}"{{/if}}{{#if position}}, position = "{{position}}"{{/if}}{{#if width}}, width = {{width}}{{/if}})'
+    rTemplate: 'geom_bar({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if stat}}{{#if mapping}}, {{/if}}stat = {{stat}}{{/if}}{{#if position}}, position = {{position}}{{/if}}{{#if alpha}}, alpha = {{alpha}}{{/if}}{{#if width}}, width = {{width}}{{/if}})'
   },
   
   {
@@ -1117,6 +1139,359 @@ export const blockDefinitions: BlockDefinition[] = [
       }
     ],
     rTemplate: 'theme({{#if custom}}{{custom}}{{/if}})'
+  },
+  
+  // ========== 11. 其他几何对象 ==========
+  {
+    id: 'geom_segment',
+    type: BlockType.GEOM_SEGMENT,
+    category: BlockCategory.GEOM,
+    label: 'geom_segment()',
+    description: '线段几何对象',
+    color: '#ec4899',
+    params: [
+      {
+        name: 'data',
+        type: 'text',
+        label: 'data',
+        required: false
+      },
+      {
+        name: 'mapping',
+        type: 'text',
+        label: 'mapping',
+        required: false
+      },
+      {
+        name: 'colour',
+        type: 'text',
+        label: 'colour',
+        required: false
+      },
+      {
+        name: 'alpha',
+        type: 'text',
+        label: 'alpha',
+        required: false
+      },
+      {
+        name: 'linewidth',
+        type: 'text',
+        label: 'linewidth',
+        required: false
+      },
+      {
+        name: 'inherit_aes',
+        type: 'text',
+        label: 'inherit.aes',
+        required: false
+      }
+    ],
+    rTemplate: 'geom_segment({{#if data}}data = {{data}}{{/if}}{{#if mapping}}{{#if data}}, {{/if}}mapping = {{mapping}}{{/if}}{{#if colour}}, colour = {{colour}}{{/if}}{{#if alpha}}, alpha = {{alpha}}{{/if}}{{#if linewidth}}, linewidth = {{linewidth}}{{/if}}{{#if inherit_aes}}, inherit.aes = {{inherit_aes}}{{/if}})'
+  },
+  
+  // ========== 12. 其他标度 ==========
+  {
+    id: 'scale_fill_viridis',
+    type: BlockType.SCALE_FILL_VIRIDIS,
+    category: BlockCategory.SCALE,
+    label: 'scale_fill_viridis()',
+    description: 'Viridis 调色板',
+    color: '#06b6d4',
+    params: [
+      {
+        name: 'discrete',
+        type: 'text',
+        label: 'discrete',
+        required: false
+      },
+      {
+        name: 'option',
+        type: 'text',
+        label: 'option',
+        required: false
+      }
+    ],
+    rTemplate: 'scale_fill_viridis({{#if discrete}}discrete = {{discrete}}{{/if}}{{#if option}}, option = {{option}}{{/if}})'
+  },
+  
+  // ========== 13. 坐标轴限制 ==========
+  {
+    id: 'ylim',
+    type: BlockType.YLIM,
+    category: BlockCategory.COORD,
+    label: 'ylim()',
+    description: 'Y轴限制',
+    color: '#6366f1',
+    params: [
+      {
+        name: 'min',
+        type: 'text',
+        label: 'min',
+        required: false
+      },
+      {
+        name: 'max',
+        type: 'text',
+        label: 'max',
+        required: false
+      }
+    ],
+    rTemplate: 'ylim({{#if min}}{{min}}{{/if}}{{#if max}}, {{max}}{{/if}})'
+  },
+  
+  // ========== 14. 注释 ==========
+  {
+    id: 'annotate',
+    type: BlockType.ANNOTATE,
+    category: BlockCategory.GEOM,
+    label: 'annotate()',
+    description: '添加注释',
+    color: '#ec4899',
+    params: [
+      {
+        name: 'geom',
+        type: 'text',
+        label: 'geom',
+        required: false
+      },
+      {
+        name: 'x',
+        type: 'text',
+        label: 'x',
+        required: false
+      },
+      {
+        name: 'y',
+        type: 'text',
+        label: 'y',
+        required: false
+      },
+      {
+        name: 'label',
+        type: 'text',
+        label: 'label',
+        required: false
+      },
+      {
+        name: 'color',
+        type: 'text',
+        label: 'color',
+        required: false
+      },
+      {
+        name: 'size',
+        type: 'text',
+        label: 'size',
+        required: false
+      },
+      {
+        name: 'angle',
+        type: 'text',
+        label: 'angle',
+        required: false
+      },
+      {
+        name: 'fontface',
+        type: 'text',
+        label: 'fontface',
+        required: false
+      },
+      {
+        name: 'hjust',
+        type: 'text',
+        label: 'hjust',
+        required: false
+      }
+    ],
+    rTemplate: 'annotate({{#if geom}}{{geom}}{{/if}}{{#if x}}, x = {{x}}{{/if}}{{#if y}}, y = {{y}}{{/if}}{{#if label}}, label = {{label}}{{/if}}{{#if color}}, color = {{color}}{{/if}}{{#if size}}, size = {{size}}{{/if}}{{#if angle}}, angle = {{angle}}{{/if}}{{#if fontface}}, fontface = {{fontface}}{{/if}}{{#if hjust}}, hjust = {{hjust}}{{/if}})'
+  },
+  
+  // ========== 15. 保存图表 ==========
+  {
+    id: 'ggsave',
+    type: BlockType.GGSAVE,
+    category: BlockCategory.BASE,
+    label: 'ggsave()',
+    description: '保存图表',
+    color: '#ef4444',
+    params: [
+      {
+        name: 'plot',
+        type: 'text',
+        label: 'plot',
+        required: false
+      },
+      {
+        name: 'file',
+        type: 'text',
+        label: 'file',
+        required: false
+      },
+      {
+        name: 'width',
+        type: 'text',
+        label: 'width',
+        required: false
+      },
+      {
+        name: 'height',
+        type: 'text',
+        label: 'height',
+        required: false
+      }
+    ],
+    rTemplate: 'ggsave({{#if plot}}{{plot}}{{/if}}{{#if file}}{{#if plot}}, {{/if}}file = {{file}}{{/if}}{{#if width}}, width = {{width}}{{/if}}{{#if height}}, height = {{height}}{{/if}})'
+  },
+  
+  // ========== 16. tidyverse 数据处理 ==========
+  {
+    id: 'gather',
+    type: BlockType.GATHER,
+    category: BlockCategory.DATA,
+    label: 'gather()',
+    description: '宽转长（数据重塑）',
+    color: '#3b82f6',
+    params: [
+      {
+        name: 'key',
+        type: 'text',
+        label: 'key',
+        required: false
+      },
+      {
+        name: 'value',
+        type: 'text',
+        label: 'value',
+        required: false
+      },
+      {
+        name: 'exclude',
+        type: 'text',
+        label: '排除列',
+        required: false
+      }
+    ],
+    rTemplate: 'gather({{#if key}}key = {{key}}{{/if}}{{#if value}}, value = {{value}}{{/if}}{{#if exclude}}, {{exclude}}{{/if}})'
+  },
+  
+  {
+    id: 'arrange',
+    type: BlockType.ARRANGE,
+    category: BlockCategory.DATA,
+    label: 'arrange()',
+    description: '排序',
+    color: '#3b82f6',
+    params: [
+      {
+        name: 'columns',
+        type: 'text',
+        label: '排序列',
+        required: false
+      }
+    ],
+    rTemplate: 'arrange({{#if columns}}{{columns}}{{/if}})'
+  },
+  
+  {
+    id: 'mutate',
+    type: BlockType.MUTATE,
+    category: BlockCategory.DATA,
+    label: 'mutate()',
+    description: '添加或修改列',
+    color: '#3b82f6',
+    params: [
+      {
+        name: 'expressions',
+        type: 'text',
+        label: '表达式',
+        required: false
+      }
+    ],
+    rTemplate: 'mutate({{#if expressions}}{{expressions}}{{/if}})'
+  },
+  
+  {
+    id: 'summarize',
+    type: BlockType.SUMMARIZE,
+    category: BlockCategory.DATA,
+    label: 'summarize()',
+    description: '汇总',
+    color: '#3b82f6',
+    params: [
+      {
+        name: 'expressions',
+        type: 'text',
+        label: '汇总表达式',
+        required: false
+      }
+    ],
+    rTemplate: 'summarize({{#if expressions}}{{expressions}}{{/if}})'
+  },
+  
+  {
+    id: 'group_by',
+    type: BlockType.GROUP_BY,
+    category: BlockCategory.DATA,
+    label: 'group_by()',
+    description: '分组',
+    color: '#3b82f6',
+    params: [
+      {
+        name: 'columns',
+        type: 'text',
+        label: '分组列',
+        required: false
+      }
+    ],
+    rTemplate: 'group_by({{#if columns}}{{columns}}{{/if}})'
+  },
+  
+  {
+    id: 'rowwise',
+    type: BlockType.ROWWISE,
+    category: BlockCategory.DATA,
+    label: 'rowwise()',
+    description: '按行操作',
+    color: '#3b82f6',
+    params: [],
+    rTemplate: 'rowwise()'
+  },
+  
+  // ========== 17. 主题元素 ==========
+  {
+    id: 'unit',
+    type: BlockType.UNIT,
+    category: BlockCategory.THEME,
+    label: 'unit()',
+    description: '单位',
+    color: '#10b981',
+    params: [
+      {
+        name: 'values',
+        type: 'text',
+        label: '值',
+        required: false
+      },
+      {
+        name: 'units',
+        type: 'text',
+        label: '单位',
+        required: false
+      }
+    ],
+    rTemplate: 'unit({{#if values}}{{values}}{{/if}}{{#if units}}, {{units}}{{/if}})'
+  },
+  
+  {
+    id: 'element_blank',
+    type: BlockType.ELEMENT_BLANK,
+    category: BlockCategory.THEME,
+    label: 'element_blank()',
+    description: '空白元素',
+    color: '#10b981',
+    params: [],
+    rTemplate: 'element_blank()'
   }
 ];
 

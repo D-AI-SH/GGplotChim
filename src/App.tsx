@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import BlockPalette from './components/BlockPalette';
 import Canvas from './components/Canvas';
 import PreviewPanel from './components/PreviewPanel';
+import ReversibilityTester from './components/ReversibilityTester';
 import { BlockDefinition } from './types/blocks';
 import { useBlockStore } from './store/useBlockStore';
 import { Trash2, Download, Upload } from 'lucide-react';
@@ -120,6 +121,9 @@ const App: React.FC = () => {
           GGplotChim v1.0.0 | 基于 React 18 + TypeScript
         </p>
       </footer>
+      
+      {/* 可逆性测试面板 */}
+      {isWebRReady && <ReversibilityTester webR={webRRunner.getWebR()} />}
     </div>
   );
 };
