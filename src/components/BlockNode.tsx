@@ -16,6 +16,7 @@ interface BlockNodeProps {
   isDragging?: boolean;
   isSelected?: boolean;
   dropTarget?: { containerId: string; slotName: string; insertIndex: number } | null;
+  onDoubleClick?: (blockId: string) => void;
 }
 
 const BlockNode: React.FC<BlockNodeProps> = ({ 
@@ -29,7 +30,8 @@ const BlockNode: React.FC<BlockNodeProps> = ({
   onDropToSlot,
   isDragging = false,
   isSelected = false,
-  dropTarget = null
+  dropTarget = null,
+  onDoubleClick
 }) => {
   const { blocks } = useBlockStore();
   
@@ -53,6 +55,15 @@ const BlockNode: React.FC<BlockNodeProps> = ({
     }
   };
   
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    console.log('🖱️ 双击积木:', block.id);
+    if (onDoubleClick) {
+      onDoubleClick(block.id);
+    }
+  };
+  
   const isContainer = definition.slots && definition.slots.length > 0;
   
   return (
@@ -65,6 +76,7 @@ const BlockNode: React.FC<BlockNodeProps> = ({
       }}
       onClick={onClick}
       onMouseDown={onMouseDown}
+      onDoubleClick={handleDoubleClick}
     >
       {/* 输入连接点（顶部） */}
       <div 
@@ -161,6 +173,7 @@ const BlockNode: React.FC<BlockNodeProps> = ({
                               onConnectionEnd={onConnectionEnd}
                               onDropToSlot={onDropToSlot}
                               dropTarget={dropTarget}
+                              onDoubleClick={onDoubleClick}
                             />
                           </React.Fragment>
                         );

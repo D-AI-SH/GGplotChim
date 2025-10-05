@@ -3,6 +3,7 @@ import { useBlockStore } from '../store/useBlockStore';
 import { BlockDefinition, BlockInstance } from '../types/blocks';
 import { blockDefinitions } from '../data/blockDefinitions';
 import BlockNode from './BlockNode';
+import BlockEditor from './BlockEditor';
 import { generateRCode } from '../utils/codeGenerator';
 import { connectBlocks, findNearestConnectable, updateChainOrder, findRootBlock } from '../utils/blockConnections';
 
@@ -12,7 +13,7 @@ const SNAP_DISTANCE = 50; // 自动吸附距离（像素）
 const BLOCK_HEIGHT = 80; // 积木的大致高度，用于计算连接点位置
 
 const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
-  const { blocks, addBlock, removeBlock, updateBlock, updateBlocks, setSelectedBlock, setGeneratedCode, selectedBlockIds, setSelectedBlocks, toggleBlockSelection, clearSelection, setSyncSource } = useBlockStore();
+  const { blocks, addBlock, removeBlock, updateBlock, updateBlocks, setSelectedBlock, setGeneratedCode, selectedBlockIds, setSelectedBlocks, toggleBlockSelection, clearSelection, setSyncSource, editingBlockId, setEditingBlockId } = useBlockStore();
   const [draggingBlockId, setDraggingBlockId] = useState<string | null>(null);
   const [nearestSnapTarget, setNearestSnapTarget] = useState<{ blockId: string; type: 'input' | 'output' } | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
@@ -21,6 +22,8 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
   const lastUpdateTime = useRef<number>(0);
   const updateThrottle = 16; // 约 60fps
   const canvasRef = useRef<HTMLDivElement>(null);
+  const dragStartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isDraggingStarted, setIsDraggingStarted] = useState(false);
   
   // 框选相关状态
   const [isSelecting, setIsSelecting] = useState(false);
@@ -132,6 +135,26 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
       setSelectedBlock(blockId);
     }
   }, [setSelectedBlock, toggleBlockSelection, hasDragged]);
+  
+  // 处理积木双击事件
+  const handleBlockDoubleClick = useCallback((blockId: string) => {
+    console.log('✅ Canvas收到双击事件，积木ID:', blockId);
+    
+    // 清除拖拽定时器，防止双击时触发拖拽
+    if (dragStartTimeoutRef.current) {
+      clearTimeout(dragStartTimeoutRef.current);
+      dragStartTimeoutRef.current = null;
+    }
+    
+    // 取消任何正在进行的拖拽
+    setDraggingBlockId(null);
+    setDragOffset(null);
+    setHasDragged(false);
+    setIsDraggingStarted(false);
+    
+    // 打开编辑器
+    setEditingBlockId(blockId);
+  }, [setEditingBlockId]);
   
   // 处理拖放到容器插槽
   const handleDropToSlot = useCallback((containerBlockId: string, slotName: string, draggedBlockId: string, insertIndex?: number) => {
@@ -323,6 +346,11 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
   const handleBlockMouseDown = useCallback((e: React.MouseEvent, blockId: string) => {
     e.stopPropagation();
     
+    // 清除之前的延迟拖拽定时器
+    if (dragStartTimeoutRef.current) {
+      clearTimeout(dragStartTimeoutRef.current);
+    }
+    
     const block = blocks.find(b => b.id === blockId);
     if (!block) return;
     
@@ -339,59 +367,67 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
       setSelectedBlock(blockId);
     }
     
-    // 如果积木在容器中（有 parentId），需要将其提升到画布顶层进行拖拽
-    if (block.parentId) {
-      // 获取积木元素的实际位置（屏幕坐标）
-      const blockElement = document.querySelector(`[data-block-id="${blockId}"]`) as HTMLElement;
-      if (blockElement) {
-        const blockRect = blockElement.getBoundingClientRect();
-        
-        // 转换为画布坐标系（考虑滚动）
-        const newX = blockRect.left - rect.left + scrollLeft;
-        const newY = blockRect.top - rect.top + scrollTop;
-        
-        // 设置拖拽偏移（基于鼠标相对于积木元素的位置）
+    // 延迟启动拖拽（避免干扰双击）
+    const startDrag = () => {
+      setIsDraggingStarted(true);
+      
+      // 如果积木在容器中（有 parentId），需要将其提升到画布顶层进行拖拽
+      if (block.parentId) {
+        // 获取积木元素的实际位置（屏幕坐标）
+        const blockElement = document.querySelector(`[data-block-id="${blockId}"]`) as HTMLElement;
+        if (blockElement) {
+          const blockRect = blockElement.getBoundingClientRect();
+          
+          // 转换为画布坐标系（考虑滚动）
+          const newX = blockRect.left - rect.left + scrollLeft;
+          const newY = blockRect.top - rect.top + scrollTop;
+          
+          // 设置拖拽偏移（基于鼠标相对于积木元素的位置）
+          setDragOffset({
+            x: e.clientX - blockRect.left,
+            y: e.clientY - blockRect.top
+          });
+          
+          // 立即设置拖拽状态
+          setDraggingBlockId(blockId);
+          setHasDragged(false);
+          
+          // 然后在下一帧中更新积木位置和从容器中移除
+          requestAnimationFrame(() => {
+            // 从父容器中移除
+            const parentBlock = blocks.find(b => b.id === block.parentId);
+            if (parentBlock && parentBlock.children && block.slotName) {
+              const slotChildren = parentBlock.children[block.slotName] || [];
+              updateBlock(parentBlock.id, {
+                children: {
+                  ...parentBlock.children,
+                  [block.slotName]: slotChildren.filter(id => id !== blockId)
+                }
+              });
+            }
+            
+            // 更新积木：移除 parentId 和 slotName，设置新的位置
+            updateBlock(blockId, {
+              parentId: undefined,
+              slotName: undefined,
+              position: { x: newX, y: newY }
+            });
+          });
+        }
+      } else {
+        // 普通的顶层积木拖拽
         setDragOffset({
-          x: e.clientX - blockRect.left,
-          y: e.clientY - blockRect.top
+          x: e.clientX - rect.left - block.position.x,
+          y: e.clientY - rect.top - block.position.y
         });
         
-        // 立即设置拖拽状态
         setDraggingBlockId(blockId);
         setHasDragged(false);
-        
-        // 然后在下一帧中更新积木位置和从容器中移除
-        requestAnimationFrame(() => {
-          // 从父容器中移除
-          const parentBlock = blocks.find(b => b.id === block.parentId);
-          if (parentBlock && parentBlock.children && block.slotName) {
-            const slotChildren = parentBlock.children[block.slotName] || [];
-            updateBlock(parentBlock.id, {
-              children: {
-                ...parentBlock.children,
-                [block.slotName]: slotChildren.filter(id => id !== blockId)
-              }
-            });
-          }
-          
-          // 更新积木：移除 parentId 和 slotName，设置新的位置
-          updateBlock(blockId, {
-            parentId: undefined,
-            slotName: undefined,
-            position: { x: newX, y: newY }
-          });
-        });
       }
-    } else {
-      // 普通的顶层积木拖拽
-      setDragOffset({
-        x: e.clientX - rect.left - block.position.x,
-        y: e.clientY - rect.top - block.position.y
-      });
-      
-      setDraggingBlockId(blockId);
-      setHasDragged(false);
-    }
+    };
+    
+    // 延迟300ms启动拖拽，给双击事件留出更宽松的时间窗口
+    dragStartTimeoutRef.current = setTimeout(startDrag, 300);
   }, [blocks, setSelectedBlock, selectedBlockIds, updateBlock]);
   
   // 计算两个连接点之间的距离
@@ -560,6 +596,12 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
   
   // 结束拖动积木
   const handleMouseUp = useCallback((e: MouseEvent) => {
+    // 清除拖拽启动定时器
+    if (dragStartTimeoutRef.current) {
+      clearTimeout(dragStartTimeoutRef.current);
+      dragStartTimeoutRef.current = null;
+    }
+    
     if (!draggingBlockId) {
       return;
     }
@@ -1572,6 +1614,7 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
                     isDragging={draggingBlockId === block.id}
                     isSelected={selectedBlockIds.includes(block.id)}
                     dropTarget={dropTarget}
+                    onDoubleClick={handleBlockDoubleClick}
                   />
                 </div>
               ) : null;
@@ -1619,6 +1662,14 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
           </div>
         )}
       </div>
+      
+      {/* 积木编辑器 */}
+      {editingBlockId && (
+        <BlockEditor
+          blockId={editingBlockId}
+          onClose={() => setEditingBlockId(null)}
+        />
+      )}
     </div>
   );
 });

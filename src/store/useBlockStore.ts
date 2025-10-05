@@ -50,6 +50,9 @@ interface BlockStore {
   plotDPI: number; // 图片 DPI
   exportFormat: ExportFormat; // 导出格式（png/svg/jpeg/pdf）
   
+  // 积木编辑
+  editingBlockId: string | null; // 正在编辑的积木 ID
+  
   // Actions
   addBlock: (block: BlockInstance) => void;
   removeBlock: (blockId: string) => void;
@@ -78,6 +81,7 @@ interface BlockStore {
   setInstalledPackages: (packages: string[]) => void;
   setIsInstallingPackages: (isInstalling: boolean) => void;
   setFontConfig: (fontConfig: FontConfig) => void;
+  setEditingBlockId: (blockId: string | null) => void;
   clearAll: () => void;
 }
 
@@ -103,6 +107,7 @@ export const useBlockStore = create<BlockStore>((set, get) => ({
   selectedPackages: ['ggplot2'], // 默认选择 ggplot2
   installedPackages: [],
   isInstallingPackages: false,
+  editingBlockId: null,
   // 从 localStorage 加载字体配置，如果没有则使用默认值
   fontConfig: (() => {
     try {
@@ -424,6 +429,8 @@ export const useBlockStore = create<BlockStore>((set, get) => ({
     }
     set({ fontConfig });
   },
+  
+  setEditingBlockId: (blockId) => set({ editingBlockId: blockId }),
   
   clearAll: () => set({
     blocks: [],
