@@ -1045,7 +1045,19 @@ function extractValue(node: any): string {
   }
   
   if (node.type === 'symbol') {
-    return node.name || '';
+    const symbolName = node.name || '';
+    // 🔧 检查符号名是否需要反引号
+    // 如果包含空格、特殊字符或以数字开头，需要用反引号包裹
+    if (symbolName && (
+      symbolName.includes(' ') ||
+      symbolName.includes('[') ||
+      symbolName.includes(']') ||
+      /^[0-9]/.test(symbolName) ||
+      /[^a-zA-Z0-9_.]/.test(symbolName)
+    )) {
+      return `\`${symbolName}\``;
+    }
+    return symbolName;
   }
   
   if (node.type === 'call') {

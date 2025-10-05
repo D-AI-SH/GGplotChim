@@ -1955,6 +1955,12 @@ export const blockDefinitions: BlockDefinition[] = [
     color: '#06b6d4',
     params: [
       {
+        name: 'name',
+        type: 'text',
+        label: 'name',
+        required: false
+      },
+      {
         name: 'discrete',
         type: 'text',
         label: 'discrete',
@@ -1967,7 +1973,7 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'scale_fill_viridis({{#if discrete}}discrete = {{discrete}}{{/if}}{{#if option}}, option = {{option}}{{/if}})'
+    rTemplate: 'scale_fill_viridis({{#if name}}name = {{name}}{{/if}}{{#if discrete}}{{#if name}}, {{/if}}discrete = {{discrete}}{{/if}}{{#if option}}{{#if name}}, {{else}}{{#if discrete}}, {{/if}}{{/if}}option = {{option}}{{/if}})'
   },
   
   // ========== 13. 坐标轴限制 ==========
