@@ -1,5 +1,7 @@
 /* ========== 引入基础样式 ========== */
 @import './variables.css';
+@import './antd-design-system.css';
+@import './components.css';
 @import './animations.css';
 @import './utilities.css';
 @import './TemplateSelector.css';
@@ -159,50 +161,87 @@ body {
   gap: var(--spacing-sm);
 }
 
+/* 头部按钮 - 基于 Ant Design 样式 */
 .header-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: 0.6rem var(--spacing-lg);
-  background: rgba(255, 255, 255, 0.2);
-  border: var(--border-width) solid rgba(255, 255, 255, 0.3);
-  color: var(--bg-white);
-  border-radius: var(--radius-md);
+  justify-content: center;
+  gap: var(--ant-spacing-xs);
+  padding: 4px 15px;
+  height: 32px;
+  font-size: var(--ant-font-size-base);
+  font-weight: 400;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--ant-border-radius-base);
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--ant-gray-1);
   cursor: pointer;
-  font-weight: var(--font-medium);
-  transition: var(--transition-all);
+  transition: all var(--ant-motion-duration-mid) var(--ant-motion-ease-in-out);
+  user-select: none;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
 }
 
 .header-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
   transform: translateY(-1px);
+  box-shadow: var(--ant-shadow-2);
+}
+
+.header-btn:active {
+  transform: translateY(0);
 }
 
 .header-btn.danger:hover {
-  background: rgba(239, 68, 68, 0.8);
-  border-color: var(--color-danger);
+  background: var(--ant-error-6);
+  border-color: var(--ant-error-6);
+  box-shadow: 0 2px 8px rgba(245, 34, 45, 0.3);
 }
 
 .header-btn.developer-active {
-  background: rgba(34, 197, 94, 0.3);
-  border-color: rgba(34, 197, 94, 0.5);
-  color: #22c55e;
+  background: rgba(82, 196, 26, 0.2);
+  border-color: var(--ant-success-5);
+  color: var(--ant-gray-1);
+  box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.1);
 }
 
 .header-btn.developer-active:hover {
-  background: rgba(34, 197, 94, 0.4);
-  border-color: #22c55e;
+  background: rgba(82, 196, 26, 0.3);
+  border-color: var(--ant-success-6);
+}
+
+.header-btn.package-btn {
+  background: linear-gradient(135deg, rgba(82, 196, 26, 0.2) 0%, rgba(56, 158, 13, 0.2) 100%);
+  border-color: rgba(82, 196, 26, 0.5);
+}
+
+.header-btn.package-btn:hover {
+  background: linear-gradient(135deg, rgba(82, 196, 26, 0.3) 0%, rgba(56, 158, 13, 0.3) 100%);
+  border-color: var(--ant-success-5);
+  box-shadow: 0 2px 8px rgba(82, 196, 26, 0.3);
+}
+
+.header-btn.font-btn {
+  background: linear-gradient(135deg, rgba(250, 140, 22, 0.2) 0%, rgba(217, 119, 6, 0.2) 100%);
+  border-color: rgba(250, 140, 22, 0.5);
+}
+
+.header-btn.font-btn:hover {
+  background: linear-gradient(135deg, rgba(250, 140, 22, 0.3) 0%, rgba(217, 119, 6, 0.3) 100%);
+  border-color: var(--ant-warning-5);
+  box-shadow: 0 2px 8px rgba(250, 140, 22, 0.3);
 }
 
 .header-btn.template-btn {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(37, 99, 235, 0.3) 100%);
-  border-color: rgba(59, 130, 246, 0.5);
+  background: linear-gradient(135deg, rgba(22, 119, 255, 0.2) 0%, rgba(9, 88, 217, 0.2) 100%);
+  border-color: rgba(22, 119, 255, 0.5);
 }
 
 .header-btn.template-btn:hover {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.5) 0%, rgba(37, 99, 235, 0.5) 100%);
-  border-color: rgba(59, 130, 246, 0.8);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, rgba(22, 119, 255, 0.3) 0%, rgba(9, 88, 217, 0.3) 100%);
+  border-color: var(--ant-primary-5);
+  box-shadow: 0 2px 8px rgba(22, 119, 255, 0.3);
 }
 
 /* ========== 主体区域 ========== */
@@ -226,7 +265,7 @@ body {
 }
 
 .main-right {
-  width: 480px;
+  width: 640px;
   background: var(--bg-white);
   border-left: var(--border-width) solid var(--border-color);
   overflow-y: auto;
@@ -339,18 +378,25 @@ body {
 
 .developer-key-input {
   width: 100%;
-  padding: var(--spacing-md);
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: var(--font-base);
-  transition: var(--transition-all);
-  background: var(--bg-white);
+  padding: 4px 11px;
+  height: 32px;
+  border: 1px solid var(--ant-gray-5);
+  border-radius: var(--ant-border-radius-base);
+  font-size: var(--ant-font-size-base);
+  line-height: var(--ant-line-height-base);
+  color: var(--ant-gray-13);
+  background: var(--ant-gray-1);
+  transition: all var(--ant-motion-duration-mid) var(--ant-motion-ease-in-out);
+}
+
+.developer-key-input:hover {
+  border-color: var(--ant-primary-5);
 }
 
 .developer-key-input:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  border-color: var(--ant-primary-6);
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
 }
 
 .developer-key-error {
@@ -368,44 +414,52 @@ body {
 }
 
 .developer-key-btn {
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border: var(--border-width) solid transparent;
-  border-radius: var(--radius-md);
-  font-size: var(--font-sm);
-  font-weight: var(--font-medium);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 15px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: var(--ant-border-radius-base);
+  font-size: var(--ant-font-size-base);
+  font-weight: 400;
   cursor: pointer;
-  transition: var(--transition-all);
+  transition: all var(--ant-motion-duration-mid) var(--ant-motion-ease-in-out);
   min-width: 80px;
+  user-select: none;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.02);
 }
 
 .developer-key-btn.primary {
-  background: var(--color-primary);
-  color: var(--bg-white);
-  border-color: var(--color-primary);
+  background: var(--ant-primary-6);
+  color: var(--ant-gray-1);
+  border-color: var(--ant-primary-6);
 }
 
 .developer-key-btn.primary:hover:not(:disabled) {
-  background: var(--color-primary-dark);
-  border-color: var(--color-primary-dark);
+  background: var(--ant-primary-5);
+  border-color: var(--ant-primary-5);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3);
 }
 
 .developer-key-btn.primary:disabled {
-  background: var(--color-gray-300);
-  border-color: var(--color-gray-300);
+  background: var(--ant-gray-5);
+  border-color: var(--ant-gray-5);
   cursor: not-allowed;
+  opacity: 0.4;
   transform: none;
 }
 
 .developer-key-btn.secondary {
-  background: transparent;
-  color: var(--color-gray-600);
-  border-color: var(--border-color);
+  background: var(--ant-gray-1);
+  color: var(--ant-gray-13);
+  border-color: var(--ant-gray-5);
 }
 
 .developer-key-btn.secondary:hover {
-  background: var(--color-gray-50);
-  border-color: var(--color-gray-400);
+  color: var(--ant-primary-6);
+  border-color: var(--ant-primary-6);
 }
 
 @keyframes slideIn {
@@ -456,38 +510,38 @@ body {
   font-weight: 600;
 }
 
-/* 标签页导航 */
+/* 标签页导航 - 使用 Ant Design 样式 */
 .developer-panel-tabs {
   display: flex;
-  background: var(--color-gray-50);
-  border-bottom: 1px solid var(--border-color);
-  padding: 0 12px;
+  background: var(--ant-gray-1);
+  border-bottom: 1px solid var(--ant-gray-4);
+  padding: 0 var(--ant-spacing-sm);
 }
 
 .developer-tab {
-  padding: 12px 20px;
+  padding: var(--ant-spacing-sm) var(--ant-spacing-md);
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
-  color: var(--color-gray-600);
+  color: var(--ant-gray-8);
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  font-size: var(--ant-font-size-base);
+  font-weight: 400;
+  transition: all var(--ant-motion-duration-mid) var(--ant-motion-ease-in-out);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--ant-spacing-xs);
+  position: relative;
 }
 
 .developer-tab:hover {
-  color: var(--color-primary);
-  background: rgba(99, 102, 241, 0.05);
+  color: var(--ant-primary-6);
 }
 
 .developer-tab.active {
-  color: var(--color-primary);
-  border-bottom-color: var(--color-primary);
-  background: white;
+  color: var(--ant-primary-6);
+  border-bottom-color: var(--ant-primary-6);
+  font-weight: 500;
 }
 
 /* 面板内容区 */
@@ -507,26 +561,28 @@ body {
   to { opacity: 1; }
 }
 
-/* 信息框 */
+/* 信息框 - 使用 Ant Design 样式 */
 .developer-info-box {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  padding: 16px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  border-left: 4px solid var(--color-primary);
+  background: var(--ant-info-1);
+  padding: var(--ant-spacing-md);
+  border-radius: var(--ant-border-radius-base);
+  margin-bottom: var(--ant-spacing-lg);
+  border: 1px solid var(--ant-info-3);
+  border-left: 4px solid var(--ant-info-6);
 }
 
 .developer-info-box h4 {
-  margin: 0 0 8px 0;
-  font-size: 16px;
-  color: var(--color-gray-800);
+  margin: 0 0 var(--ant-spacing-xs) 0;
+  font-size: var(--ant-font-size-lg);
+  font-weight: 500;
+  color: var(--ant-info-7);
 }
 
 .developer-info-box p {
   margin: 0;
-  font-size: 14px;
-  color: var(--color-gray-600);
-  line-height: 1.5;
+  font-size: var(--ant-font-size-base);
+  color: var(--ant-info-8);
+  line-height: var(--ant-line-height-base);
 }
 
 /* 分组区域 */
@@ -561,68 +617,79 @@ body {
   color: var(--color-gray-700);
 }
 
-/* 按钮 */
+/* 开发者面板按钮 - 使用 Ant Design 样式 */
 .developer-btn {
   width: 100%;
-  padding: 12px 16px;
-  border: none;
-  border-radius: 8px;
+  padding: 6.4px 15px;
+  height: 40px;
+  border: 1px solid transparent;
+  border-radius: var(--ant-border-radius-base);
   cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.2s ease;
-  display: flex;
+  font-weight: 400;
+  font-size: var(--ant-font-size-base);
+  transition: all var(--ant-motion-duration-mid) var(--ant-motion-ease-in-out);
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: var(--ant-spacing-xs);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.02);
 }
 
 .developer-btn:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.4;
 }
 
 .developer-btn.primary {
-  background: var(--color-success);
-  color: white;
+  background: var(--ant-success-6);
+  border-color: var(--ant-success-6);
+  color: var(--ant-gray-1);
 }
 
 .developer-btn.primary:hover:not(:disabled) {
-  background: #059669;
+  background: var(--ant-success-5);
+  border-color: var(--ant-success-5);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.3);
 }
 
 .developer-btn.secondary {
-  background: var(--color-primary);
-  color: white;
+  background: var(--ant-primary-6);
+  border-color: var(--ant-primary-6);
+  color: var(--ant-gray-1);
 }
 
 .developer-btn.secondary:hover:not(:disabled) {
-  background: var(--color-primary-dark);
+  background: var(--ant-primary-5);
+  border-color: var(--ant-primary-5);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3);
 }
 
-/* 下拉选择 */
+/* 下拉选择 - 使用 Ant Design 样式 */
 .developer-select {
   width: 100%;
-  padding: 10px 12px;
-  margin-bottom: 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 14px;
-  background: white;
+  padding: 4px 11px;
+  height: 32px;
+  margin-bottom: var(--ant-spacing-sm);
+  border: 1px solid var(--ant-gray-5);
+  border-radius: var(--ant-border-radius-base);
+  font-size: var(--ant-font-size-base);
+  line-height: var(--ant-line-height-base);
+  background: var(--ant-gray-1);
+  color: var(--ant-gray-13);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--ant-motion-duration-mid) var(--ant-motion-ease-in-out);
 }
 
 .developer-select:hover {
-  border-color: var(--color-primary);
+  border-color: var(--ant-primary-5);
 }
 
 .developer-select:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  border-color: var(--ant-primary-6);
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
 }
 
 /* 提示文字 */
@@ -633,24 +700,25 @@ body {
   font-style: italic;
 }
 
-/* 结果框 */
+/* 结果框 - 使用 Ant Design Alert 样式 */
 .developer-result-box {
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  font-size: 14px;
+  padding: var(--ant-spacing-sm) var(--ant-spacing-md);
+  border-radius: var(--ant-border-radius-base);
+  margin-bottom: var(--ant-spacing-md);
+  font-size: var(--ant-font-size-base);
+  border: 1px solid transparent;
 }
 
 .developer-result-box.success {
-  background: #d1fae5;
-  border: 2px solid var(--color-success);
-  color: #065f46;
+  background: var(--ant-success-1);
+  border-color: var(--ant-success-3);
+  color: var(--ant-success-7);
 }
 
 .developer-result-box.failure {
-  background: #fee2e2;
-  border: 2px solid var(--color-error);
-  color: #991b1b;
+  background: var(--ant-error-1);
+  border-color: var(--ant-error-3);
+  color: var(--ant-error-7);
 }
 
 /* 代码块 */
@@ -748,12 +816,12 @@ body {
   line-height: 1.5;
 }
 
-/* 现代化的切换开关 */
+/* 切换开关 - 使用 Ant Design 样式 */
 .toggle-switch {
   position: relative;
   display: inline-block;
-  width: 50px;
-  height: 28px;
+  width: 44px;
+  height: 22px;
   flex-shrink: 0;
 }
 
@@ -770,27 +838,26 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #cbd5e1;
-  transition: all 0.3s ease;
-  border-radius: 28px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--ant-gray-6);
+  transition: all var(--ant-motion-duration-mid) var(--ant-motion-ease-in-out);
+  border-radius: var(--ant-border-radius-round);
 }
 
 .toggle-slider:before {
   position: absolute;
   content: "";
-  height: 22px;
-  width: 22px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: all 0.3s ease;
-  border-radius: 50%;
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background: var(--ant-gray-1);
+  transition: all var(--ant-motion-duration-mid) var(--ant-motion-ease-out-back);
+  border-radius: var(--ant-border-radius-circle);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .toggle-switch input:checked + .toggle-slider {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--ant-primary-6);
 }
 
 .toggle-switch input:checked + .toggle-slider:before {
@@ -798,7 +865,7 @@ body {
 }
 
 .toggle-switch:hover .toggle-slider {
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15), 0 0 0 3px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
 }
 
 /* 提示列表 */

@@ -78,6 +78,7 @@ export enum BlockType {
   SCALE_COLOR_MANUAL = 'scale_color_manual',
   SCALE_FILL_MANUAL = 'scale_fill_manual',
   SCALE_COLOR_BREWER = 'scale_color_brewer',
+  SCALE_FILL_BREWER = 'scale_fill_brewer',
   SCALE_FILL_GRADIENT = 'scale_fill_gradient',
   SCALE_FILL_VIRIDIS = 'scale_fill_viridis',
   
@@ -196,4 +197,13 @@ export interface Dataset {
   rowCount: number;
   preview?: any[][];
 }
+
+// 字体配置
+export interface FontConfig {
+  chineseFont: string; // 中文字体
+  englishFont: string; // 英文字体
+}
+
+// 图片导出格式
+export type ExportFormat = 'png' | 'svg' | 'jpeg' | 'pdf';
 

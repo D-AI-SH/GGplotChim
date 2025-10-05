@@ -65,7 +65,7 @@ p <- ggplot(data) +
   ggplot2::annotate("text", x = rep(max(data$id),5), y = c(0, 50, 100, 150, 200), label = c("0", "50", "100", "150", "200") , color="grey", size=6 , angle=0, fontface="bold", hjust=1) +
   
   ylim(-150,max(label_data$tot, na.rm=T)) +
-  theme_minimal() +
+  theme_minimal(base_family = getOption("ggplot_chinese_font", "SimSun")) +
   theme(
     legend.position = "none",
     axis.text = element_blank(),

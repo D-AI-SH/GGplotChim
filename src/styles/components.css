@@ -1,0 +1,595 @@
+/**
+ * 可复用组件样式库
+ * 基于 Ant Design 设计系统的常用组件封装
+ */
+
+/* ==================== 卡片组件变体 ==================== */
+.card-bordered {
+  background: var(--ant-gray-1);
+  border: 1px solid var(--ant-gray-4);
+  border-radius: var(--ant-border-radius-lg);
+  padding: var(--ant-spacing-lg);
+  transition: all var(--ant-motion-duration-mid) var(--ant-motion-ease-in-out);
+}
+
+.card-hoverable {
+  cursor: pointer;
+}
+
+.card-hoverable:hover {
+  border-color: var(--ant-primary-6);
+  box-shadow: var(--ant-shadow-2);
+  transform: translateY(-2px);
+}
+
+.card-shadow {
+  box-shadow: var(--ant-shadow-1);
+}
+
+.card-shadow:hover {
+  box-shadow: var(--ant-shadow-3);
+}
+
+/* ==================== 列表组件 ==================== */
+.list-item {
+  display: flex;
+  align-items: center;
+  padding: var(--ant-spacing-sm) var(--ant-spacing-md);
+  border-bottom: 1px solid var(--ant-gray-4);
+  transition: background var(--ant-motion-duration-fast) var(--ant-motion-ease-in-out);
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.list-item:hover {
+  background: var(--ant-gray-2);
+}
+
+.list-item-clickable {
+  cursor: pointer;
+}
+
+.list-item-clickable:hover {
+  background: var(--ant-primary-1);
+}
+
+/* ==================== 表单组件 ==================== */
+.form-item {
+  margin-bottom: var(--ant-spacing-lg);
+}
+
+.form-label {
+  display: block;
+  margin-bottom: var(--ant-spacing-xs);
+  font-size: var(--ant-font-size-base);
+  font-weight: 400;
+  color: var(--ant-gray-13);
+}
+
+.form-label-required::before {
+  content: '*';
+  color: var(--ant-error-6);
+  margin-right: 4px;
+}
+
+.form-help {
+  margin-top: var(--ant-spacing-xs);
+  font-size: var(--ant-font-size-sm);
+  color: var(--ant-gray-7);
+}
+
+.form-error {
+  margin-top: var(--ant-spacing-xs);
+  font-size: var(--ant-font-size-sm);
+  color: var(--ant-error-6);
+}
+
+/* ==================== 分隔符 ==================== */
+.divider-horizontal {
+  border: none;
+  border-top: 1px solid var(--ant-gray-4);
+  margin: var(--ant-spacing-lg) 0;
+}
+
+.divider-vertical {
+  display: inline-block;
+  width: 1px;
+  height: 1em;
+  margin: 0 var(--ant-spacing-xs);
+  vertical-align: middle;
+  background: var(--ant-gray-4);
+}
+
+.divider-dashed {
+  border-style: dashed;
+}
+
+/* ==================== 标题组件 ==================== */
+.heading-1 {
+  font-size: var(--ant-font-size-heading-1);
+  line-height: var(--ant-line-height-heading);
+  font-weight: 600;
+  color: var(--ant-gray-13);
+  margin: 0 0 var(--ant-spacing-lg) 0;
+}
+
+.heading-2 {
+  font-size: var(--ant-font-size-heading-2);
+  line-height: var(--ant-line-height-heading);
+  font-weight: 600;
+  color: var(--ant-gray-13);
+  margin: 0 0 var(--ant-spacing-md) 0;
+}
+
+.heading-3 {
+  font-size: var(--ant-font-size-heading-3);
+  line-height: var(--ant-line-height-heading);
+  font-weight: 600;
+  color: var(--ant-gray-13);
+  margin: 0 0 var(--ant-spacing-md) 0;
+}
+
+.heading-4 {
+  font-size: var(--ant-font-size-heading-4);
+  line-height: var(--ant-line-height-heading);
+  font-weight: 600;
+  color: var(--ant-gray-13);
+  margin: 0 0 var(--ant-spacing-sm) 0;
+}
+
+.heading-5 {
+  font-size: var(--ant-font-size-heading-5);
+  line-height: var(--ant-line-height-heading);
+  font-weight: 600;
+  color: var(--ant-gray-13);
+  margin: 0 0 var(--ant-spacing-sm) 0;
+}
+
+/* ==================== 文本组件 ==================== */
+.text-primary {
+  color: var(--ant-primary-6);
+}
+
+.text-success {
+  color: var(--ant-success-6);
+}
+
+.text-warning {
+  color: var(--ant-warning-6);
+}
+
+.text-error {
+  color: var(--ant-error-6);
+}
+
+.text-secondary {
+  color: var(--ant-gray-7);
+}
+
+.text-disabled {
+  color: var(--ant-gray-6);
+}
+
+.text-bold {
+  font-weight: 600;
+}
+
+.text-sm {
+  font-size: var(--ant-font-size-sm);
+}
+
+.text-lg {
+  font-size: var(--ant-font-size-lg);
+}
+
+/* ==================== 间距工具类 ==================== */
+.m-0 { margin: 0; }
+.mt-xs { margin-top: var(--ant-spacing-xs); }
+.mt-sm { margin-top: var(--ant-spacing-sm); }
+.mt-md { margin-top: var(--ant-spacing-md); }
+.mt-lg { margin-top: var(--ant-spacing-lg); }
+.mt-xl { margin-top: var(--ant-spacing-xl); }
+
+.mb-xs { margin-bottom: var(--ant-spacing-xs); }
+.mb-sm { margin-bottom: var(--ant-spacing-sm); }
+.mb-md { margin-bottom: var(--ant-spacing-md); }
+.mb-lg { margin-bottom: var(--ant-spacing-lg); }
+.mb-xl { margin-bottom: var(--ant-spacing-xl); }
+
+.ml-xs { margin-left: var(--ant-spacing-xs); }
+.ml-sm { margin-left: var(--ant-spacing-sm); }
+.ml-md { margin-left: var(--ant-spacing-md); }
+.ml-lg { margin-left: var(--ant-spacing-lg); }
+
+.mr-xs { margin-right: var(--ant-spacing-xs); }
+.mr-sm { margin-right: var(--ant-spacing-sm); }
+.mr-md { margin-right: var(--ant-spacing-md); }
+.mr-lg { margin-right: var(--ant-spacing-lg); }
+
+.p-0 { padding: 0; }
+.pt-xs { padding-top: var(--ant-spacing-xs); }
+.pt-sm { padding-top: var(--ant-spacing-sm); }
+.pt-md { padding-top: var(--ant-spacing-md); }
+.pt-lg { padding-top: var(--ant-spacing-lg); }
+
+.pb-xs { padding-bottom: var(--ant-spacing-xs); }
+.pb-sm { padding-bottom: var(--ant-spacing-sm); }
+.pb-md { padding-bottom: var(--ant-spacing-md); }
+.pb-lg { padding-bottom: var(--ant-spacing-lg); }
+
+.pl-xs { padding-left: var(--ant-spacing-xs); }
+.pl-sm { padding-left: var(--ant-spacing-sm); }
+.pl-md { padding-left: var(--ant-spacing-md); }
+.pl-lg { padding-left: var(--ant-spacing-lg); }
+
+.pr-xs { padding-right: var(--ant-spacing-xs); }
+.pr-sm { padding-right: var(--ant-spacing-sm); }
+.pr-md { padding-right: var(--ant-spacing-md); }
+.pr-lg { padding-right: var(--ant-spacing-lg); }
+
+/* ==================== Flexbox 工具类 ==================== */
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.flex-row {
+  flex-direction: row;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-start {
+  display: flex;
+  align-items: flex-start;
+}
+
+.flex-end {
+  display: flex;
+  align-items: flex-end;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.items-start {
+  align-items: flex-start;
+}
+
+.items-end {
+  align-items: flex-end;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.justify-around {
+  justify-content: space-around;
+}
+
+.justify-end {
+  justify-content: flex-end;
+}
+
+.gap-xs {
+  gap: var(--ant-spacing-xs);
+}
+
+.gap-sm {
+  gap: var(--ant-spacing-sm);
+}
+
+.gap-md {
+  gap: var(--ant-spacing-md);
+}
+
+.gap-lg {
+  gap: var(--ant-spacing-lg);
+}
+
+/* ==================== 显示工具类 ==================== */
+.block {
+  display: block;
+}
+
+.inline-block {
+  display: inline-block;
+}
+
+.inline {
+  display: inline;
+}
+
+.hidden {
+  display: none;
+}
+
+/* ==================== 位置工具类 ==================== */
+.relative {
+  position: relative;
+}
+
+.absolute {
+  position: absolute;
+}
+
+.fixed {
+  position: fixed;
+}
+
+.sticky {
+  position: sticky;
+}
+
+/* ==================== 溢出工具类 ==================== */
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.overflow-auto {
+  overflow: auto;
+}
+
+.overflow-scroll {
+  overflow: scroll;
+}
+
+.overflow-x-auto {
+  overflow-x: auto;
+}
+
+.overflow-y-auto {
+  overflow-y: auto;
+}
+
+/* ==================== 圆角工具类 ==================== */
+.rounded-sm {
+  border-radius: var(--ant-border-radius-sm);
+}
+
+.rounded {
+  border-radius: var(--ant-border-radius-base);
+}
+
+.rounded-lg {
+  border-radius: var(--ant-border-radius-lg);
+}
+
+.rounded-xl {
+  border-radius: var(--ant-border-radius-xl);
+}
+
+.rounded-full {
+  border-radius: var(--ant-border-radius-round);
+}
+
+.rounded-circle {
+  border-radius: var(--ant-border-radius-circle);
+}
+
+/* ==================== 阴影工具类 ==================== */
+.shadow-sm {
+  box-shadow: var(--ant-shadow-1);
+}
+
+.shadow {
+  box-shadow: var(--ant-shadow-2);
+}
+
+.shadow-lg {
+  box-shadow: var(--ant-shadow-3);
+}
+
+.shadow-none {
+  box-shadow: none;
+}
+
+/* ==================== 边框工具类 ==================== */
+.border {
+  border: 1px solid var(--ant-gray-4);
+}
+
+.border-t {
+  border-top: 1px solid var(--ant-gray-4);
+}
+
+.border-b {
+  border-bottom: 1px solid var(--ant-gray-4);
+}
+
+.border-l {
+  border-left: 1px solid var(--ant-gray-4);
+}
+
+.border-r {
+  border-right: 1px solid var(--ant-gray-4);
+}
+
+.border-none {
+  border: none;
+}
+
+.border-primary {
+  border-color: var(--ant-primary-6);
+}
+
+.border-success {
+  border-color: var(--ant-success-6);
+}
+
+.border-warning {
+  border-color: var(--ant-warning-6);
+}
+
+.border-error {
+  border-color: var(--ant-error-6);
+}
+
+/* ==================== 宽度工具类 ==================== */
+.w-full {
+  width: 100%;
+}
+
+.w-auto {
+  width: auto;
+}
+
+.h-full {
+  height: 100%;
+}
+
+.h-auto {
+  height: auto;
+}
+
+/* ==================== 交互工具类 ==================== */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.cursor-not-allowed {
+  cursor: not-allowed;
+}
+
+.cursor-default {
+  cursor: default;
+}
+
+.select-none {
+  user-select: none;
+}
+
+.select-text {
+  user-select: text;
+}
+
+.pointer-events-none {
+  pointer-events: none;
+}
+
+.pointer-events-auto {
+  pointer-events: auto;
+}
+
+/* ==================== 过渡动画工具类 ==================== */
+.transition-all {
+  transition: all var(--ant-motion-duration-mid) var(--ant-motion-ease-in-out);
+}
+
+.transition-fast {
+  transition: all var(--ant-motion-duration-fast) var(--ant-motion-ease-in-out);
+}
+
+.transition-slow {
+  transition: all var(--ant-motion-duration-slow) var(--ant-motion-ease-in-out);
+}
+
+/* ==================== 悬停效果 ==================== */
+.hover-lift {
+  transition: all var(--ant-motion-duration-mid) var(--ant-motion-ease-in-out);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ant-shadow-2);
+}
+
+.hover-scale {
+  transition: transform var(--ant-motion-duration-mid) var(--ant-motion-ease-in-out);
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.hover-opacity {
+  transition: opacity var(--ant-motion-duration-mid) var(--ant-motion-ease-in-out);
+}
+
+.hover-opacity:hover {
+  opacity: 0.8;
+}
+
+/* ==================== 背景工具类 ==================== */
+.bg-white {
+  background: var(--ant-gray-1);
+}
+
+.bg-gray {
+  background: var(--ant-gray-3);
+}
+
+.bg-primary {
+  background: var(--ant-primary-1);
+}
+
+.bg-success {
+  background: var(--ant-success-1);
+}
+
+.bg-warning {
+  background: var(--ant-warning-1);
+}
+
+.bg-error {
+  background: var(--ant-error-1);
+}
+
+/* ==================== 文本对齐工具类 ==================== */
+.text-left {
+  text-align: left;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* ==================== 截断文本 ==================== */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

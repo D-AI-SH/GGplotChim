@@ -1272,9 +1272,15 @@ export const blockDefinitions: BlockDefinition[] = [
         type: 'text',
         label: 'inherit.aes',
         required: false
+      },
+      {
+        name: 'stat',
+        type: 'text',
+        label: 'stat',
+        required: false
       }
     ],
-    rTemplate: 'geom_text({{#if data}}data = {{data}}{{/if}}{{#if mapping}}{{#if data}}, {{/if}}mapping = {{mapping}}{{/if}}{{#if color}}, color = {{color}}{{/if}}{{#if fontface}}, fontface = {{fontface}}{{/if}}{{#if alpha}}, alpha = {{alpha}}{{/if}}{{#if size}}, size = {{size}}{{/if}}{{#if angle}}, angle = {{angle}}{{/if}}{{#if vjust}}, vjust = {{vjust}}{{/if}}{{#if hjust}}, hjust = {{hjust}}{{/if}}{{#if inherit_aes}}, inherit.aes = {{inherit_aes}}{{/if}})'
+    rTemplate: 'geom_text({{#if stat}}stat = {{stat}}{{/if}}{{#if data}}{{#if stat}}, {{/if}}data = {{data}}{{/if}}{{#if mapping}}{{#if data}}, {{/if}}{{#if stat}}, {{/if}}mapping = {{mapping}}{{/if}}{{#if color}}, color = {{color}}{{/if}}{{#if fontface}}, fontface = {{fontface}}{{/if}}{{#if alpha}}, alpha = {{alpha}}{{/if}}{{#if size}}, size = {{size}}{{/if}}{{#if angle}}, angle = {{angle}}{{/if}}{{#if vjust}}, vjust = {{vjust}}{{/if}}{{#if hjust}}, hjust = {{hjust}}{{/if}}{{#if inherit_aes}}, inherit.aes = {{inherit_aes}}{{/if}})'
   },
   
   {
@@ -1411,9 +1417,15 @@ export const blockDefinitions: BlockDefinition[] = [
         type: 'text',
         label: 'name',
         required: false
+      },
+      {
+        name: 'guide',
+        type: 'text',
+        label: 'guide',
+        required: false
       }
     ],
-    rTemplate: 'scale_fill_manual({{#if values}}values = {{values}}{{/if}}{{#if name}}, name = {{name}}{{/if}})'
+    rTemplate: 'scale_fill_manual({{#if values}}values = {{values}}{{/if}}{{#if name}}, name = {{name}}{{/if}}{{#if guide}}, guide = {{guide}}{{/if}})'
   },
   
   {
@@ -1435,9 +1447,45 @@ export const blockDefinitions: BlockDefinition[] = [
         type: 'text',
         label: 'direction',
         required: false
+      },
+      {
+        name: 'name',
+        type: 'text',
+        label: 'name',
+        required: false
       }
     ],
-    rTemplate: 'scale_color_brewer({{#if palette}}palette = {{palette}}{{/if}}{{#if direction}}, direction = {{direction}}{{/if}})'
+    rTemplate: 'scale_color_brewer({{#if palette}}palette = {{palette}}{{/if}}{{#if direction}}, direction = {{direction}}{{/if}}{{#if name}}, name = {{name}}{{/if}})'
+  },
+  
+  {
+    id: 'scale_fill_brewer',
+    type: BlockType.SCALE_FILL_BREWER,
+    category: BlockCategory.SCALE,
+    label: 'scale_fill_brewer()',
+    description: 'ColorBrewer 填充调色板',
+    color: '#06b6d4',
+    params: [
+      {
+        name: 'palette',
+        type: 'text',
+        label: 'palette',
+        required: false
+      },
+      {
+        name: 'direction',
+        type: 'text',
+        label: 'direction',
+        required: false
+      },
+      {
+        name: 'name',
+        type: 'text',
+        label: 'name',
+        required: false
+      }
+    ],
+    rTemplate: 'scale_fill_brewer({{#if palette}}palette = {{palette}}{{/if}}{{#if direction}}, direction = {{direction}}{{/if}}{{#if name}}, name = {{name}}{{/if}})'
   },
   
   {
@@ -1663,13 +1711,25 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       },
       {
+        name: 'fill',
+        type: 'text',
+        label: 'fill',
+        required: false
+      },
+      {
+        name: 'color',
+        type: 'text',
+        label: 'color',
+        required: false
+      },
+      {
         name: 'caption',
         type: 'text',
         label: 'caption',
         required: false
       }
     ],
-    rTemplate: 'labs({{#if title}}title = {{title}}{{/if}}{{#if subtitle}}, subtitle = {{subtitle}}{{/if}}{{#if x}}, x = {{x}}{{/if}}{{#if y}}, y = {{y}}{{/if}}{{#if caption}}, caption = {{caption}}{{/if}})'
+    rTemplate: 'labs({{#if title}}title = {{title}}{{/if}}{{#if subtitle}}, subtitle = {{subtitle}}{{/if}}{{#if x}}, x = {{x}}{{/if}}{{#if y}}, y = {{y}}{{/if}}{{#if fill}}, fill = {{fill}}{{/if}}{{#if color}}, color = {{color}}{{/if}}{{#if caption}}, caption = {{caption}}{{/if}})'
   },
   
   {
@@ -1740,8 +1800,10 @@ export const blockDefinitions: BlockDefinition[] = [
     label: 'theme_minimal()',
     description: '极简主题',
     color: '#10b981',
-    params: [],
-    rTemplate: 'theme_minimal()'
+    params: [
+      { name: 'args', type: 'text', label: '参数', required: false }
+    ],
+    rTemplate: 'theme_minimal({{#if args}}{{args}}{{/if}})'
   },
   
   {
@@ -2032,9 +2094,15 @@ export const blockDefinitions: BlockDefinition[] = [
         type: 'text',
         label: 'height',
         required: false
+      },
+      {
+        name: 'dpi',
+        type: 'text',
+        label: 'dpi',
+        required: false
       }
     ],
-    rTemplate: 'ggsave({{#if plot}}{{plot}}{{/if}}{{#if file}}{{#if plot}}, {{/if}}file = {{file}}{{/if}}{{#if width}}, width = {{width}}{{/if}}{{#if height}}, height = {{height}}{{/if}})'
+    rTemplate: 'ggsave({{#if plot}}plot = {{plot}}{{/if}}{{#if file}}{{#if plot}}, {{/if}}file = {{file}}{{/if}}{{#if width}}, width = {{width}}{{/if}}{{#if height}}, height = {{height}}{{/if}}{{#if dpi}}, dpi = {{dpi}}{{/if}})'
   },
   
   // ========== 16. tidyverse 数据处理 ==========

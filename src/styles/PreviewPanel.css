@@ -140,14 +140,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   height: 100%;
   padding: var(--spacing-2xl);
+  overflow-y: auto;
+  padding-top: 60px;
 }
 
 .plot-empty {
   text-align: center;
   color: var(--color-gray-500);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 600px;
+  width: 100%;
 }
 
 .empty-icon {
@@ -167,7 +174,7 @@
 }
 
 .run-button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-md) var(--spacing-xl);
@@ -180,6 +187,7 @@
   cursor: pointer;
   transition: var(--transition-all);
   margin-bottom: var(--spacing-xl);
+  flex-shrink: 0;
 }
 
 .run-button:hover:not(:disabled) {

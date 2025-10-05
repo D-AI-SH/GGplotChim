@@ -22,15 +22,14 @@ import { parseRCodeToBlocksWithAST } from './astCodeParser';
  * 8. 合并多行函数调用为单行
  */
 export function normalizeRCode(code: string): string {
-  let normalized = code
+  // 🔧 第一步：移除所有注释（包括行内注释和整行注释）
+  let normalized = removeComments(code);
+  
+  // 🔧 第二步：移除空行并trim
+  normalized = normalized
     .split('\n')
     .map(line => line.trim())
-    // 过滤注释和空行
-    .filter(line => {
-      if (!line) return false;
-      if (line.startsWith('#')) return false;
-      return true;
-    })
+    .filter(line => line.length > 0)
     .join('\n');
   
   // 🔧 合并所有多行函数调用（包括普通函数和 ggplot 链）
@@ -43,6 +42,73 @@ export function normalizeRCode(code: string): string {
   normalized = normalizeWhitespaceAndQuotes(normalized);
   
   return normalized;
+}
+
+/**
+ * 移除R代码中的所有注释（包括整行注释和行内注释）
+ * 注意：需要正确处理字符串中的 # 字符（不是注释）
+ */
+function removeComments(code: string): string {
+  let result = '';
+  let inString = false;
+  let stringChar = '';
+  let escaped = false;
+  
+  for (let i = 0; i < code.length; i++) {
+    const char = code[i];
+    
+    // 处理转义字符
+    if (escaped) {
+      result += char;
+      escaped = false;
+      continue;
+    }
+    
+    if (char === '\\' && inString) {
+      escaped = true;
+      result += char;
+      continue;
+    }
+    
+    // 处理字符串
+    if ((char === '"' || char === "'") && !inString) {
+      inString = true;
+      stringChar = char;
+      result += char;
+      continue;
+    }
+    
+    if (char === stringChar && inString) {
+      inString = false;
+      stringChar = '';
+      result += char;
+      continue;
+    }
+    
+    // 在字符串内部，直接添加（包括 # 字符）
+    if (inString) {
+      result += char;
+      continue;
+    }
+    
+    // 在字符串外部，检测注释
+    if (char === '#') {
+      // 跳过本行剩余内容（直到换行符）
+      while (i < code.length && code[i] !== '\n') {
+        i++;
+      }
+      // 保留换行符
+      if (i < code.length && code[i] === '\n') {
+        result += '\n';
+      }
+      continue;
+    }
+    
+    // 普通字符
+    result += char;
+  }
+  
+  return result;
 }
 
 /**

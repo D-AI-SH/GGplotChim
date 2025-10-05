@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useBlockStore } from '../store/useBlockStore';
 import { Play, AlertCircle, Loader, Download, RefreshCw, Settings } from 'lucide-react';
 import { webRRunner } from '../core/rRunner/webRRunner';
+import { convertSVGToFormat, getFormatDisplayName, getFormatDescription } from '../utils/imageConverter';
+import { ExportFormat } from '../types/blocks';
 
 const PlotPreview: React.FC = () => {
   const { 
@@ -13,11 +15,14 @@ const PlotPreview: React.FC = () => {
     plotWidth,
     plotHeight,
     plotDPI,
+    exportFormat,
+    fontConfig,
     setPlotUrl, 
     setIsRunning, 
     setRunError,
     setIsWebRInitialized,
-    setPlotSettings
+    setPlotSettings,
+    setExportFormat
   } = useBlockStore();
   
   const [initStatus, setInitStatus] = useState<string>('');
@@ -25,6 +30,8 @@ const PlotPreview: React.FC = () => {
   const [tempWidth, setTempWidth] = useState<number>(plotWidth);
   const [tempHeight, setTempHeight] = useState<number>(plotHeight);
   const [tempDPI, setTempDPI] = useState<number>(plotDPI);
+  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>(exportFormat);
+  const [isConverting, setIsConverting] = useState<boolean>(false);
 
   useEffect(() => {
     // 组件加载时初始化 WebR
@@ -34,6 +41,13 @@ const PlotPreview: React.FC = () => {
   const initializeWebR = async () => {
     if (webRRunner.isReady()) {
       setIsWebRInitialized(true);
+      // 应用缓存的字体配置
+      try {
+        await webRRunner.updateFontConfig(fontConfig.chineseFont, fontConfig.englishFont);
+        console.log('✅ 已应用缓存的字体配置:', fontConfig);
+      } catch (error) {
+        console.warn('⚠️ 应用字体配置失败:', error);
+      }
       return;
     }
 
@@ -42,6 +56,14 @@ const PlotPreview: React.FC = () => {
       await webRRunner.initialize();
       setIsWebRInitialized(true);
       setInitStatus('');
+      
+      // WebR 初始化完成后，应用缓存的字体配置
+      try {
+        await webRRunner.updateFontConfig(fontConfig.chineseFont, fontConfig.englishFont);
+        console.log('✅ WebR 初始化完成，已应用字体配置:', fontConfig);
+      } catch (error) {
+        console.warn('⚠️ 应用字体配置失败:', error);
+      }
     } catch (error) {
       console.error('WebR 初始化失败:', error);
       setRunError(error instanceof Error ? error.message : 'WebR 初始化失败');
@@ -85,13 +107,64 @@ const PlotPreview: React.FC = () => {
     }
   };
 
-  const handleDownloadPlot = () => {
+  const handleDownloadPlot = async () => {
     if (!plotUrl) return;
 
-    const a = document.createElement('a');
-    a.href = plotUrl;
-    a.download = 'ggplot_chart.png';
-    a.click();
+    try {
+      setIsConverting(true);
+      
+      // 如果选择的是 SVG 格式，直接下载
+      if (selectedFormat === 'svg') {
+        const a = document.createElement('a');
+        a.href = plotUrl;
+        a.download = `ggplot_chart.${selectedFormat}`;
+        a.click();
+        setIsConverting(false);
+        return;
+      }
+
+      // PDF 格式暂不支持
+      if (selectedFormat === 'pdf') {
+        alert('PDF 格式暂不支持，请选择 PNG、JPEG 或 SVG 格式');
+        setIsConverting(false);
+        return;
+      }
+
+      // 检查尺寸是否会超出限制
+      const MAX_CANVAS_SIZE = 32767;
+      const requestedWidth = plotWidth * plotDPI;
+      const requestedHeight = plotHeight * plotDPI;
+      
+      if (requestedWidth > MAX_CANVAS_SIZE || requestedHeight > MAX_CANVAS_SIZE) {
+        const maxDimension = Math.max(plotWidth, plotHeight);
+        const maxDPI = Math.floor(MAX_CANVAS_SIZE / maxDimension * 0.95);
+        console.warn(`⚠️ 请求尺寸 ${requestedWidth}×${requestedHeight} 超出浏览器限制，将自动调整 DPI 从 ${plotDPI} 到 ${maxDPI}`);
+      }
+      
+      // 转换为目标格式
+      console.log(`🔄 开始转换图像格式: ${selectedFormat.toUpperCase()}`);
+      const convertedDataUrl = await convertSVGToFormat(
+        plotUrl,
+        selectedFormat,
+        plotWidth,
+        plotHeight,
+        plotDPI
+      );
+
+      // 下载转换后的图像
+      const a = document.createElement('a');
+      a.href = convertedDataUrl;
+      a.download = `ggplot_chart.${selectedFormat}`;
+      a.click();
+      
+      console.log(`✅ 图像下载完成: ggplot_chart.${selectedFormat}`);
+      
+    } catch (error) {
+      console.error('❌ 图像转换/下载失败:', error);
+      alert(`图像转换失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    } finally {
+      setIsConverting(false);
+    }
   };
 
   const handleRerun = () => {
@@ -119,6 +192,17 @@ const PlotPreview: React.FC = () => {
     setTempHeight(plotHeight);
     setTempDPI(plotDPI);
   }, [plotWidth, plotHeight, plotDPI]);
+
+  // 同步导出格式
+  useEffect(() => {
+    setSelectedFormat(exportFormat);
+  }, [exportFormat]);
+
+  // 当用户选择格式时，保存到 store
+  const handleFormatChange = (format: ExportFormat) => {
+    setSelectedFormat(format);
+    setExportFormat(format);
+  };
 
   // 计算像素尺寸
   const pixelWidth = tempWidth * tempDPI;
@@ -205,9 +289,12 @@ const PlotPreview: React.FC = () => {
               <button onClick={() => { setTempWidth(20); setTempHeight(20); setTempDPI(720); }}>
                 默认 (20×20, 720 DPI)
               </button>
-              <button onClick={() => { setTempWidth(40); setTempHeight(40); setTempDPI(720); }}>
-                超高清 (40×40, 720 DPI)
+              <button onClick={() => { setTempWidth(40); setTempHeight(20); setTempDPI(720); }}>
+                超宽 (40×20, 720 DPI)
               </button>
+            </div>
+            <div className="settings-note" style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
+              💡 提示：超大尺寸会自动调整DPI以适应浏览器限制（最大32767像素）
             </div>
             
             <div className="settings-actions">
@@ -279,7 +366,8 @@ const PlotPreview: React.FC = () => {
                 <ul>
                   <li>🚀 浏览器端运行 R 代码（无需服务器）</li>
                   <li>📊 实时图表预览</li>
-                  <li>💾 图表下载（PNG 格式）</li>
+                  <li>💾 多格式图表下载（PNG/JPEG/SVG）</li>
+                  <li>🎨 高清图像导出（最高 720 DPI）</li>
                   <li>🔄 即时重新运行</li>
                 </ul>
               </div>
@@ -299,9 +387,51 @@ const PlotPreview: React.FC = () => {
                 <Settings size={16} />
                 设置
               </button>
-              <button className="action-btn" onClick={handleDownloadPlot} title="下载图表">
-                <Download size={16} />
-                下载
+              
+              {/* 格式选择下拉菜单 */}
+              <div className="format-selector" style={{ display: 'inline-flex', alignItems: 'center', marginRight: '8px' }}>
+                <label htmlFor="export-format" style={{ marginRight: '6px', fontSize: '13px', color: '#666' }}>
+                  格式:
+                </label>
+                <select
+                  id="export-format"
+                  value={selectedFormat}
+                  onChange={(e) => handleFormatChange(e.target.value as ExportFormat)}
+                  className="format-select"
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    border: '1px solid #d1d5db',
+                    fontSize: '13px',
+                    backgroundColor: 'white',
+                    cursor: 'pointer'
+                  }}
+                  title={getFormatDescription(selectedFormat)}
+                >
+                  <option value="png">PNG</option>
+                  <option value="jpeg">JPEG</option>
+                  <option value="svg">SVG</option>
+                  <option value="pdf" disabled>PDF (暂不可用)</option>
+                </select>
+              </div>
+              
+              <button 
+                className="action-btn" 
+                onClick={handleDownloadPlot} 
+                title={`下载为 ${selectedFormat.toUpperCase()} 格式`}
+                disabled={isConverting}
+              >
+                {isConverting ? (
+                  <>
+                    <Loader size={16} className="spinner" />
+                    转换中...
+                  </>
+                ) : (
+                  <>
+                    <Download size={16} />
+                    下载 {selectedFormat.toUpperCase()}
+                  </>
+                )}
               </button>
               <button className="action-btn" onClick={handleRerun} title="重新运行">
                 <RefreshCw size={16} />

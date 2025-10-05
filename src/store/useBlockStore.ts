@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { BlockInstance, Dataset } from '../types/blocks';
+import { BlockInstance, Dataset, FontConfig, ExportFormat } from '../types/blocks';
 
 interface BlockStore {
   // 积木实例
@@ -32,6 +32,9 @@ interface BlockStore {
   installedPackages: string[]; // 已安装的包
   isInstallingPackages: boolean; // 是否正在安装包
   
+  // 字体配置
+  fontConfig: FontConfig; // 字体配置（中文和英文字体）
+  
   // 双向同步控制
   syncSource: 'blocks' | 'code' | null; // 当前同步源，防止循环更新
   
@@ -45,6 +48,7 @@ interface BlockStore {
   plotWidth: number; // 图片宽度（英寸）
   plotHeight: number; // 图片高度（英寸）
   plotDPI: number; // 图片 DPI
+  exportFormat: ExportFormat; // 导出格式（png/svg/jpeg/pdf）
   
   // Actions
   addBlock: (block: BlockInstance) => void;
@@ -69,9 +73,11 @@ interface BlockStore {
   setIsDeveloperMode: (enabled: boolean) => void;
   setEnableCodeNormalization: (enabled: boolean) => void;
   setPlotSettings: (width: number, height: number, dpi: number) => void;
+  setExportFormat: (format: ExportFormat) => void;
   setSelectedPackages: (packages: string[]) => void;
   setInstalledPackages: (packages: string[]) => void;
   setIsInstallingPackages: (isInstalling: boolean) => void;
+  setFontConfig: (fontConfig: FontConfig) => void;
   clearAll: () => void;
 }
 
@@ -93,9 +99,27 @@ export const useBlockStore = create<BlockStore>((set, get) => ({
   plotWidth: 20, // 默认 20 英寸
   plotHeight: 20, // 默认 20 英寸
   plotDPI: 720, // 默认 720 DPI
+  exportFormat: 'png', // 默认导出 PNG 格式
   selectedPackages: ['ggplot2'], // 默认选择 ggplot2
   installedPackages: [],
   isInstallingPackages: false,
+  // 从 localStorage 加载字体配置，如果没有则使用默认值
+  fontConfig: (() => {
+    try {
+      const saved = localStorage.getItem('ggplotchim_font_config');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        console.log('✅ 从缓存加载字体配置:', parsed);
+        return parsed;
+      }
+    } catch (e) {
+      console.warn('⚠️ 加载字体配置失败，使用默认值:', e);
+    }
+    return {
+      chineseFont: 'SimSun', // 默认宋体（Windows兼容性最好）
+      englishFont: 'Times New Roman' // 默认Times New Roman（兼容性最好）
+    };
+  })(),
   
   addBlock: (block) => set((state) => ({
     blocks: [...state.blocks, block]
@@ -382,11 +406,24 @@ export const useBlockStore = create<BlockStore>((set, get) => ({
     plotDPI: dpi 
   }),
   
+  setExportFormat: (format) => set({ exportFormat: format }),
+  
   setSelectedPackages: (packages) => set({ selectedPackages: packages }),
   
   setInstalledPackages: (packages) => set({ installedPackages: packages }),
   
   setIsInstallingPackages: (isInstalling) => set({ isInstallingPackages: isInstalling }),
+  
+  setFontConfig: (fontConfig) => {
+    // 保存到 localStorage
+    try {
+      localStorage.setItem('ggplotchim_font_config', JSON.stringify(fontConfig));
+      console.log('✅ 字体配置已保存到缓存:', fontConfig);
+    } catch (e) {
+      console.error('❌ 保存字体配置失败:', e);
+    }
+    set({ fontConfig });
+  },
   
   clearAll: () => set({
     blocks: [],

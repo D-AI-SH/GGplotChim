@@ -639,13 +639,31 @@ function astNodeToBlock(node: any, blockIdCounter: { value: number }): BlockInst
 }
 
 /**
+ * 检查R标识符是否需要引号
+ * R中合法的标识符由字母、数字、点和下划线组成，且不能以数字开头
+ */
+function needsQuotes(identifier: string): boolean {
+  // 检查是否包含非ASCII字符（如中文）或特殊字符
+  // 合法的R标识符：以字母或点开头，后跟字母、数字、点或下划线
+  const validIdentifierPattern = /^[a-zA-Z.][a-zA-Z0-9._]*$/;
+  return !validIdentifierPattern.test(identifier);
+}
+
+/**
  * 从AST参数中提取积木参数
  */
 function extractParams(blockType: BlockType, astArgs: any): Record<string, any> {
   const params: Record<string, any> = {};
   
-  // 🔧 特殊处理：theme() 函数需要将所有参数组合成一个 custom 字符串
-  if (blockType === BlockType.THEME) {
+  // 🔧 特殊处理：theme() 和 theme_*() 函数需要将所有参数组合成一个参数字符串
+  if (blockType === BlockType.THEME || 
+      blockType === BlockType.THEME_MINIMAL ||
+      blockType === BlockType.THEME_CLASSIC ||
+      blockType === BlockType.THEME_BW ||
+      blockType === BlockType.THEME_GRAY ||
+      blockType === BlockType.THEME_LIGHT ||
+      blockType === BlockType.THEME_DARK ||
+      blockType === BlockType.THEME_VOID) {
     const argStrings: string[] = [];
     for (const [key, value] of Object.entries(astArgs)) {
       if (!value) continue;
@@ -656,7 +674,14 @@ function extractParams(blockType: BlockType, astArgs: any): Record<string, any> 
         argStrings.push(`${key} = ${argValue}`);
       }
     }
-    params.custom = argStrings.join(', ');
+    
+    // 对于 theme()，使用 custom 参数；对于其他主题，使用 args 参数
+    if (blockType === BlockType.THEME) {
+      params.custom = argStrings.join(', ');
+    } else {
+      // 对于 theme_*()，将所有参数组合成一个字符串
+      params.args = argStrings.join(', ');
+    }
     return params;
   }
   
@@ -1104,7 +1129,9 @@ function extractValue(node: any): string {
         argStrings.push(argValue);
       } else {
         // 命名参数
-        argStrings.push(`${key} = ${argValue}`);
+        // 🔧 关键修复：检查键名是否需要引号（如中文、包含特殊字符等）
+        const keyName = needsQuotes(key) ? `"${key}"` : key;
+        argStrings.push(`${keyName} = ${argValue}`);
       }
     }
     

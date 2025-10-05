@@ -6,9 +6,10 @@ import DeveloperPanel from './components/DeveloperPanel';
 import DeveloperMode from './components/DeveloperMode';
 import RPackageSelector from './components/RPackageSelector';
 import TemplateSelector from './components/TemplateSelector';
+import FontSelector from './components/FontSelector';
 import { BlockDefinition } from './types/blocks';
 import { useBlockStore } from './store/useBlockStore';
-import { Trash2, Download, Upload, FileCode } from 'lucide-react';
+import { Trash2, Download, Upload, FileCode, Package, Type } from 'lucide-react';
 import { webRRunner } from './core/rRunner/webRRunner';
 
 const App: React.FC = () => {
@@ -16,6 +17,8 @@ const App: React.FC = () => {
   const { clearAll, isWebRReady, webRInitProgress, isDeveloperMode, selectedPackages } = useBlockStore();
   const [showPackageSelector, setShowPackageSelector] = useState(true);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [showPackageManager, setShowPackageManager] = useState(false);
+  const [showFontSelector, setShowFontSelector] = useState(false);
   const [initStarted, setInitStarted] = useState(false);
   
   // 当用户确认包选择后，开始初始化 WebR
@@ -63,12 +66,38 @@ const App: React.FC = () => {
   const handleOpenTemplates = () => {
     setShowTemplateSelector(true);
   };
+
+  const handleOpenPackageManager = () => {
+    setShowPackageManager(true);
+  };
+
+  const handleOpenFontSelector = () => {
+    setShowFontSelector(true);
+  };
   
   return (
     <div className="app">
       {/* 模板选择器 */}
       {showTemplateSelector && (
         <TemplateSelector onClose={() => setShowTemplateSelector(false)} />
+      )}
+
+      {/* 包管理器 */}
+      {showPackageManager && (
+        <div className="webr-loading-overlay">
+          <div className="webr-loading-content" style={{ maxWidth: '800px', padding: '20px' }}>
+            <RPackageSelector onClose={() => setShowPackageManager(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* 字体选择器 */}
+      {showFontSelector && (
+        <div className="webr-loading-overlay">
+          <div className="webr-loading-content" style={{ maxWidth: '900px', padding: '20px' }}>
+            <FontSelector onClose={() => setShowFontSelector(false)} />
+          </div>
+        </div>
       )}
       
       {/* WebR 包选择界面 */}
@@ -88,7 +117,8 @@ const App: React.FC = () => {
             <h2>正在准备 WebR 环境...</h2>
             <p className="webr-loading-progress">{webRInitProgress}</p>
             <p className="webr-loading-tips">
-              💡 首次加载需要下载约 10-20MB 的文件，请耐心等待
+              💡 首次加载需要下载约 10-20MB 的文件，请耐心等待<br/>
+              ⚡ 已启用缓存功能：重启后将快速加载，无需重复下载
             </p>
           </div>
         </div>
@@ -104,6 +134,14 @@ const App: React.FC = () => {
         </div>
         
         <div className="header-actions">
+          <button className="header-btn package-btn" onClick={handleOpenPackageManager} title="管理 R 包">
+            <Package size={18} />
+            包管理
+          </button>
+          <button className="header-btn font-btn" onClick={handleOpenFontSelector} title="配置字体">
+            <Type size={18} />
+            字体
+          </button>
           <button className="header-btn template-btn" onClick={handleOpenTemplates} title="选择代码模板">
             <FileCode size={18} />
             模板
