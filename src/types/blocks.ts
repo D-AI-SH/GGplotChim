@@ -161,6 +161,7 @@ export interface BlockDefinition {
   rTemplate: string; // R 代码模板
   isContainer?: boolean; // 是否为容器型积木（C型）
   slots?: BlockSlot[]; // 容器插槽（如 for 循环的循环体）
+  supportsAssignment?: boolean; // 是否支持变量赋值（如 p <- ggplot(...)）
 }
 
 export interface BlockInstance {

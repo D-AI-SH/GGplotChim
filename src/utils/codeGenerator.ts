@@ -300,7 +300,9 @@ export function generateRCode(blocks: BlockInstance[]): string {
         const code = generateBlockCode(current);
         // 🚀 只有当代码非空时才添加到输出
         if (code.trim()) {
-          lines.push(code);
+          // 添加变量赋值（如果有）
+          const assignment = current.assignedTo ? `${current.assignedTo} <- ` : '';
+          lines.push(`${assignment}${code}`);
         }
       }
       

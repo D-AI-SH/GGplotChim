@@ -11,7 +11,8 @@ export const blockDefinitions: BlockDefinition[] = [
     description: '程序开始（主程序入口）',
     color: '#22c55e',
     params: [],
-    rTemplate: '' // START积木不生成任何代码，只作为逻辑入口
+    rTemplate: '', // START积木不生成任何代码，只作为逻辑入口
+    supportsAssignment: false // 开始积木不支持赋值
   },
   
   {
@@ -30,7 +31,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: 'library({{package}})'
+    rTemplate: 'library({{package}})',
+    supportsAssignment: false // library()不应该赋值
   },
   
   {
@@ -49,7 +51,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: 'print({{value}})'
+    rTemplate: 'print({{value}})',
+    supportsAssignment: false // print()不应该赋值
   },
   
   {
@@ -75,7 +78,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: '{{#if variable}}{{variable}} <- {{/if}}{{value}}'
+    rTemplate: '{{#if variable}}{{variable}} <- {{/if}}{{value}}',
+    supportsAssignment: false // 本身就是赋值语句，不需要外部赋值
   },
   
   {
@@ -109,7 +113,8 @@ export const blockDefinitions: BlockDefinition[] = [
         allowMultiple: true
       }
     ],
-    rTemplate: 'for ({{var}} in {{range}}) {\n{{#each children.body}}{{this}}{{/each}}\n}'
+    rTemplate: 'for ({{var}} in {{range}}) {\n{{#each children.body}}{{this}}{{/each}}\n}',
+    supportsAssignment: false // 控制流语句不支持赋值
   },
   
   {
@@ -141,7 +146,8 @@ export const blockDefinitions: BlockDefinition[] = [
         allowMultiple: true
       }
     ],
-    rTemplate: 'if ({{condition}}) {\n{{#each children.then}}{{this}}{{/each}}{{#if children.else.length}}\n} else {\n{{#each children.else}}{{this}}{{/each}}{{/if}}\n}'
+    rTemplate: 'if ({{condition}}) {\n{{#each children.then}}{{this}}{{/each}}{{#if children.else.length}}\n} else {\n{{#each children.else}}{{this}}{{/each}}{{/if}}\n}',
+    supportsAssignment: false // 控制流语句不支持赋值
   },
   
   {
@@ -167,7 +173,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: '{{function_name}}({{#if args}}{{args}}{{/if}})'
+    rTemplate: '{{function_name}}({{#if args}}{{args}}{{/if}})',
+    supportsAssignment: true // 函数调用通常有返回值，支持赋值
   },
   
   {
@@ -186,7 +193,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: '# {{text}}'
+    rTemplate: '# {{text}}',
+    supportsAssignment: false // 注释不支持赋值
   },
   
   {
@@ -205,7 +213,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: '{{code}}'
+    rTemplate: '{{code}}',
+    supportsAssignment: true // 自定义代码可能有返回值
   },
   
   // ========== R基础函数 ==========
@@ -225,7 +234,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: 'c({{elements}})'
+    rTemplate: 'c({{elements}})',
+    supportsAssignment: true // 返回向量，支持赋值
   },
   
   {
@@ -263,7 +273,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'seq({{#if from}}{{from}}{{/if}}{{#if to}}, {{to}}{{/if}}{{#if by}}, by={{by}}{{/if}}{{#if length_out}}, length.out={{length_out}}{{/if}})'
+    rTemplate: 'seq({{#if from}}{{from}}{{/if}}{{#if to}}, {{to}}{{/if}}{{#if by}}, by={{by}}{{/if}}{{#if length_out}}, length.out={{length_out}}{{/if}})',
+    supportsAssignment: true // 返回序列，支持赋值
   },
   
   {
@@ -294,7 +305,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'rep({{x}}{{#if times}}, {{times}}{{/if}}{{#if each}}, each={{each}}{{/if}})'
+    rTemplate: 'rep({{x}}{{#if times}}, {{times}}{{/if}}{{#if each}}, each={{each}}{{/if}})',
+    supportsAssignment: true // 返回向量，支持赋值
   },
   
   {
@@ -320,7 +332,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'paste({{elements}}{{#if sep}}, sep={{sep}}{{/if}})'
+    rTemplate: 'paste({{elements}}{{#if sep}}, sep={{sep}}{{/if}})',
+    supportsAssignment: true // 返回字符串，支持赋值
   },
   
   {
@@ -351,7 +364,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'factor({{x}}{{#if levels}}, levels={{levels}}{{/if}}{{#if labels}}, labels={{labels}}{{/if}})'
+    rTemplate: 'factor({{x}}{{#if levels}}, levels={{levels}}{{/if}}{{#if labels}}, labels={{labels}}{{/if}})',
+    supportsAssignment: true // 返回因子，支持赋值
   },
   
   {
@@ -370,7 +384,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: 'as.factor({{x}})'
+    rTemplate: 'as.factor({{x}})',
+    supportsAssignment: true // 返回因子，支持赋值
   },
   
   {
@@ -403,7 +418,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: 'ifelse({{test}}, {{yes}}, {{no}})'
+    rTemplate: 'ifelse({{test}}, {{yes}}, {{no}})',
+    supportsAssignment: true // 返回向量，支持赋值
   },
   
   {
@@ -422,7 +438,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: 'data.frame({{columns}})'
+    rTemplate: 'data.frame({{columns}})',
+    supportsAssignment: true // 返回数据框，支持赋值
   },
   
   {
@@ -453,7 +470,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: 'matrix({{data}}{{#if nrow}}, {{nrow}}{{/if}}, {{ncol}})'
+    rTemplate: 'matrix({{data}}{{#if nrow}}, {{nrow}}{{/if}}, {{ncol}})',
+    supportsAssignment: true // 返回矩阵，支持赋值
   },
   
   {
@@ -472,7 +490,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: 'rbind({{objects}})'
+    rTemplate: 'rbind({{objects}})',
+    supportsAssignment: true // 返回合并后的对象，支持赋值
   },
   
   {
@@ -491,7 +510,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: 'cbind({{objects}})'
+    rTemplate: 'cbind({{objects}})',
+    supportsAssignment: true // 返回合并后的对象，支持赋值
   },
   
   {
@@ -510,7 +530,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: 'nrow({{x}})'
+    rTemplate: 'nrow({{x}})',
+    supportsAssignment: true // 返回数值，支持赋值
   },
   
   {
@@ -529,7 +550,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: 'ncol({{x}})'
+    rTemplate: 'ncol({{x}})',
+    supportsAssignment: true // 返回数值，支持赋值
   },
   
   {
@@ -548,7 +570,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: 'colnames({{x}})'
+    rTemplate: 'colnames({{x}})',
+    supportsAssignment: true // 返回字符向量，支持赋值
   },
   
   {
@@ -567,7 +590,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: 'rownames({{x}})'
+    rTemplate: 'rownames({{x}})',
+    supportsAssignment: true // 返回字符向量，支持赋值
   },
   
   {
@@ -586,7 +610,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: 'levels({{x}})'
+    rTemplate: 'levels({{x}})',
+    supportsAssignment: true // 返回字符向量，支持赋值
   },
   
   {
@@ -605,7 +630,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: 'nlevels({{x}})'
+    rTemplate: 'nlevels({{x}})',
+    supportsAssignment: true // 返回数值，支持赋值
   },
   
   {
@@ -631,7 +657,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'sum({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})'
+    rTemplate: 'sum({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})',
+    supportsAssignment: true // 返回数值，支持赋值
   },
   
   {
@@ -657,7 +684,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'mean({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})'
+    rTemplate: 'mean({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})',
+    supportsAssignment: true // 返回数值，支持赋值
   },
   
   {
@@ -683,7 +711,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'min({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})'
+    rTemplate: 'min({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})',
+    supportsAssignment: true // 返回数值，支持赋值
   },
   
   {
@@ -709,7 +738,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'max({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})'
+    rTemplate: 'max({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})',
+    supportsAssignment: true // 返回数值，支持赋值
   },
   
   {
@@ -735,7 +765,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'median({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})'
+    rTemplate: 'median({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})',
+    supportsAssignment: true // 返回数值，支持赋值
   },
   
   {
@@ -761,7 +792,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'sd({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})'
+    rTemplate: 'sd({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})',
+    supportsAssignment: true // 返回数值，支持赋值
   },
   
   {
@@ -787,7 +819,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'var({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})'
+    rTemplate: 'var({{x}}{{#if na_rm}}, na.rm=TRUE{{/if}})',
+    supportsAssignment: true // 返回数值，支持赋值
   },
   
   {
@@ -806,7 +839,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: 'length({{x}})'
+    rTemplate: 'length({{x}})',
+    supportsAssignment: true // 返回数值，支持赋值
   },
   
   {
@@ -838,7 +872,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'sample({{x}}, {{size}}{{#if replace}}, replace=TRUE{{/if}})'
+    rTemplate: 'sample({{x}}, {{size}}{{#if replace}}, replace=TRUE{{/if}})',
+    supportsAssignment: true // 返回向量，支持赋值
   },
   
   // ========== 1. 数据层 (Data) ==========
@@ -866,7 +901,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: 'data <- {{source}}'
+    rTemplate: 'data <- {{source}}',
+    supportsAssignment: false // 已经包含赋值语句
   },
   
   // ========== 2. ggplot() 初始化 ==========
@@ -892,7 +928,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'ggplot({{data}}{{#if mapping}}, {{mapping}}{{/if}})'
+    rTemplate: 'ggplot({{data}}{{#if mapping}}, {{mapping}}{{/if}})',
+    supportsAssignment: true // 返回ggplot对象，支持赋值
   },
   
   // ========== 3. aes() 美学映射 ==========
@@ -953,7 +990,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'aes({{#if x}}x = {{x}}{{/if}}{{#if y}}{{#if x}}, {{/if}}y = {{y}}{{/if}}{{#if color}}, color = {{color}}{{/if}}{{#if fill}}, fill = {{fill}}{{/if}}{{#if size}}, size = {{size}}{{/if}}{{#if alpha}}, alpha = {{alpha}}{{/if}}{{#if shape}}, shape = {{shape}}{{/if}}{{#if linetype}}, linetype = {{linetype}}{{/if}})'
+    rTemplate: 'aes({{#if x}}x = {{x}}{{/if}}{{#if y}}{{#if x}}, {{/if}}y = {{y}}{{/if}}{{#if color}}, color = {{color}}{{/if}}{{#if fill}}, fill = {{fill}}{{/if}}{{#if size}}, size = {{size}}{{/if}}{{#if alpha}}, alpha = {{alpha}}{{/if}}{{#if shape}}, shape = {{shape}}{{/if}}{{#if linetype}}, linetype = {{linetype}}{{/if}})',
+    supportsAssignment: true // 返回aes对象，支持赋值
   },
   
   // ========== 4. 几何对象 (Geoms) - 基础语句 ==========
@@ -996,7 +1034,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'geom_point({{#if mapping}}mapping = {{mapping}}, {{/if}}{{#if size}}size = {{size}}, {{/if}}{{#if alpha}}alpha = {{alpha}}, {{/if}}{{#if color}}color = {{color}}, {{/if}}{{#if shape}}shape = {{shape}}, {{/if}})'
+    rTemplate: 'geom_point({{#if mapping}}mapping = {{mapping}}, {{/if}}{{#if size}}size = {{size}}, {{/if}}{{#if alpha}}alpha = {{alpha}}, {{/if}}{{#if color}}color = {{color}}, {{/if}}{{#if shape}}shape = {{shape}}, {{/if}})',
+    supportsAssignment: false // geom层，通过+连接，不支持赋值
   },
   
   {
@@ -1032,7 +1071,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'geom_line({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if linewidth}}{{#if mapping}}, {{/if}}linewidth = {{linewidth}}{{/if}}{{#if linetype}}, linetype = {{linetype}}{{/if}}{{#if color}}, color = {{color}}{{/if}})'
+    rTemplate: 'geom_line({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if linewidth}}{{#if mapping}}, {{/if}}linewidth = {{linewidth}}{{/if}}{{#if linetype}}, linetype = {{linetype}}{{/if}}{{#if color}}, color = {{color}}{{/if}})',
+    supportsAssignment: false // geom层，通过+连接，不支持赋值
   },
   
   {
@@ -1075,7 +1115,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'geom_bar({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if stat}}{{#if mapping}}, {{/if}}stat = {{stat}}{{/if}}{{#if position}}, position = {{position}}{{/if}}{{#if alpha}}, alpha = {{alpha}}{{/if}}{{#if width}}, width = {{width}}{{/if}})'
+    rTemplate: 'geom_bar({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if stat}}{{#if mapping}}, {{/if}}stat = {{stat}}{{/if}}{{#if position}}, position = {{position}}{{/if}}{{#if alpha}}, alpha = {{alpha}}{{/if}}{{#if width}}, width = {{width}}{{/if}})',
+    supportsAssignment: false // geom层，通过+连接，不支持赋值
   },
   
   {
@@ -1105,7 +1146,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'geom_col({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if position}}{{#if mapping}}, {{/if}}position = {{position}}{{/if}}{{#if width}}, width = {{width}}{{/if}})'
+    rTemplate: 'geom_col({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if position}}{{#if mapping}}, {{/if}}position = {{position}}{{/if}}{{#if width}}, width = {{width}}{{/if}})',
+    supportsAssignment: false // geom层，通过+连接，不支持赋值
   },
   
   {
@@ -1135,7 +1177,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'geom_histogram({{#if bins}}bins = {{bins}}{{/if}}{{#if binwidth}}{{#if bins}}, {{/if}}binwidth = {{binwidth}}{{/if}}{{#if fill}}, fill = {{fill}}{{/if}})'
+    rTemplate: 'geom_histogram({{#if bins}}bins = {{bins}}{{/if}}{{#if binwidth}}{{#if bins}}, {{/if}}binwidth = {{binwidth}}{{/if}}{{#if fill}}, fill = {{fill}}{{/if}})',
+    supportsAssignment: false // geom层，通过+连接，不支持赋值
   },
   
   {
@@ -1165,7 +1208,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'geom_boxplot({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if width}}{{#if mapping}}, {{/if}}width = {{width}}{{/if}}{{#if outlier_color}}, outlier.color = {{outlier_color}}{{/if}})'
+    rTemplate: 'geom_boxplot({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if width}}{{#if mapping}}, {{/if}}width = {{width}}{{/if}}{{#if outlier_color}}, outlier.color = {{outlier_color}}{{/if}})',
+    supportsAssignment: false // geom层，通过+连接，不支持赋值
   },
   
   {
@@ -1202,7 +1246,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'geom_smooth({{#if mapping}}mapping = {{mapping}}, {{/if}}{{#if method}}method = {{method}}, {{/if}}{{#if se}}se = {{se}}, {{/if}}{{#if level}}level = {{level}}, {{/if}})'
+    rTemplate: 'geom_smooth({{#if mapping}}mapping = {{mapping}}, {{/if}}{{#if method}}method = {{method}}, {{/if}}{{#if se}}se = {{se}}, {{/if}}{{#if level}}level = {{level}}, {{/if}})',
+    supportsAssignment: false // geom层，通过+连接，不支持赋值
   },
   
   {
@@ -1280,7 +1325,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'geom_text({{#if stat}}stat = {{stat}}{{/if}}{{#if data}}{{#if stat}}, {{/if}}data = {{data}}{{/if}}{{#if mapping}}{{#if data}}, {{/if}}{{#if stat}}, {{/if}}mapping = {{mapping}}{{/if}}{{#if color}}, color = {{color}}{{/if}}{{#if fontface}}, fontface = {{fontface}}{{/if}}{{#if alpha}}, alpha = {{alpha}}{{/if}}{{#if size}}, size = {{size}}{{/if}}{{#if angle}}, angle = {{angle}}{{/if}}{{#if vjust}}, vjust = {{vjust}}{{/if}}{{#if hjust}}, hjust = {{hjust}}{{/if}}{{#if inherit_aes}}, inherit.aes = {{inherit_aes}}{{/if}})'
+    rTemplate: 'geom_text({{#if stat}}stat = {{stat}}{{/if}}{{#if data}}{{#if stat}}, {{/if}}data = {{data}}{{/if}}{{#if mapping}}{{#if data}}, {{/if}}{{#if stat}}, {{/if}}mapping = {{mapping}}{{/if}}{{#if color}}, color = {{color}}{{/if}}{{#if fontface}}, fontface = {{fontface}}{{/if}}{{#if alpha}}, alpha = {{alpha}}{{/if}}{{#if size}}, size = {{size}}{{/if}}{{#if angle}}, angle = {{angle}}{{/if}}{{#if vjust}}, vjust = {{vjust}}{{/if}}{{#if hjust}}, hjust = {{hjust}}{{/if}}{{#if inherit_aes}}, inherit.aes = {{inherit_aes}}{{/if}})',
+    supportsAssignment: false // geom层，通过+连接，不支持赋值
   },
   
   {
@@ -1310,7 +1356,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'geom_area({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if alpha}}{{#if mapping}}, {{/if}}alpha = {{alpha}}{{/if}}{{#if fill}}, fill = {{fill}}{{/if}})'
+    rTemplate: 'geom_area({{#if mapping}}mapping = {{mapping}}{{/if}}{{#if alpha}}{{#if mapping}}, {{/if}}alpha = {{alpha}}{{/if}}{{#if fill}}, fill = {{fill}}{{/if}})',
+    supportsAssignment: false // geom层，通过+连接，不支持赋值
   },
   
   // ========== 5. 标度 (Scales) ==========
@@ -1341,7 +1388,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'scale_x_continuous({{#if name}}name = {{name}}{{/if}}{{#if limits}}, limits = {{limits}}{{/if}}{{#if breaks}}, breaks = {{breaks}}{{/if}})'
+    rTemplate: 'scale_x_continuous({{#if name}}name = {{name}}{{/if}}{{#if limits}}, limits = {{limits}}{{/if}}{{#if breaks}}, breaks = {{breaks}}{{/if}})',
+    supportsAssignment: false // scale层，通过+连接，不支持赋值
   },
   
   {
@@ -1371,7 +1419,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'scale_y_continuous({{#if name}}name = {{name}}{{/if}}{{#if limits}}, limits = {{limits}}{{/if}}{{#if breaks}}, breaks = {{breaks}}{{/if}})'
+    rTemplate: 'scale_y_continuous({{#if name}}name = {{name}}{{/if}}{{#if limits}}, limits = {{limits}}{{/if}}{{#if breaks}}, breaks = {{breaks}}{{/if}})',
+    supportsAssignment: false // scale层，通过+连接，不支持赋值
   },
   
   {
@@ -1395,7 +1444,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'scale_color_manual({{#if values}}values = {{values}}{{/if}}{{#if name}}, name = {{name}}{{/if}})'
+    rTemplate: 'scale_color_manual({{#if values}}values = {{values}}{{/if}}{{#if name}}, name = {{name}}{{/if}})',
+    supportsAssignment: false // scale层，通过+连接，不支持赋值
   },
   
   {
@@ -1425,7 +1475,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'scale_fill_manual({{#if values}}values = {{values}}{{/if}}{{#if name}}, name = {{name}}{{/if}}{{#if guide}}, guide = {{guide}}{{/if}})'
+    rTemplate: 'scale_fill_manual({{#if values}}values = {{values}}{{/if}}{{#if name}}, name = {{name}}{{/if}}{{#if guide}}, guide = {{guide}}{{/if}})',
+    supportsAssignment: false // scale层，通过+连接，不支持赋值
   },
   
   {
@@ -1455,7 +1506,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'scale_color_brewer({{#if palette}}palette = {{palette}}{{/if}}{{#if direction}}, direction = {{direction}}{{/if}}{{#if name}}, name = {{name}}{{/if}})'
+    rTemplate: 'scale_color_brewer({{#if palette}}palette = {{palette}}{{/if}}{{#if direction}}, direction = {{direction}}{{/if}}{{#if name}}, name = {{name}}{{/if}})',
+    supportsAssignment: false // scale层，通过+连接，不支持赋值
   },
   
   {
@@ -1485,7 +1537,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'scale_fill_brewer({{#if palette}}palette = {{palette}}{{/if}}{{#if direction}}, direction = {{direction}}{{/if}}{{#if name}}, name = {{name}}{{/if}})'
+    rTemplate: 'scale_fill_brewer({{#if palette}}palette = {{palette}}{{/if}}{{#if direction}}, direction = {{direction}}{{/if}}{{#if name}}, name = {{name}}{{/if}})',
+    supportsAssignment: false // scale层，通过+连接，不支持赋值
   },
   
   {
@@ -1509,7 +1562,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'scale_fill_gradient({{#if low}}low = {{low}}{{/if}}{{#if high}}, high = {{high}}{{/if}})'
+    rTemplate: 'scale_fill_gradient({{#if low}}low = {{low}}{{/if}}{{#if high}}, high = {{high}}{{/if}})',
+    supportsAssignment: false // scale层，通过+连接，不支持赋值
   },
   
   // ========== 6. 坐标系 (Coordinates) ==========
@@ -1521,7 +1575,8 @@ export const blockDefinitions: BlockDefinition[] = [
     description: '翻转坐标轴',
     color: '#6366f1',
     params: [],
-    rTemplate: 'coord_flip()'
+    rTemplate: 'coord_flip()',
+    supportsAssignment: false // coord层，通过+连接，不支持赋值
   },
   
   {
@@ -1545,7 +1600,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'coord_cartesian({{#if xlim}}xlim = {{xlim}}{{/if}}{{#if ylim}}, ylim = {{ylim}}{{/if}})'
+    rTemplate: 'coord_cartesian({{#if xlim}}xlim = {{xlim}}{{/if}}{{#if ylim}}, ylim = {{ylim}}{{/if}})',
+    supportsAssignment: false // coord层，通过+连接，不支持赋值
   },
   
   {
@@ -1564,7 +1620,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'coord_polar({{#if theta}}theta = {{theta}}{{/if}})'
+    rTemplate: 'coord_polar({{#if theta}}theta = {{theta}}{{/if}})',
+    supportsAssignment: false // coord层，通过+连接，不支持赋值
   },
   
   // ========== 7. 分面 (Facets) ==========
@@ -1595,7 +1652,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'facet_wrap({{#if facets}}{{facets}}{{/if}}{{#if ncol}}, ncol = {{ncol}}{{/if}}{{#if nrow}}, nrow = {{nrow}}{{/if}})'
+    rTemplate: 'facet_wrap({{#if facets}}{{facets}}{{/if}}{{#if ncol}}, ncol = {{ncol}}{{/if}}{{#if nrow}}, nrow = {{nrow}}{{/if}})',
+    supportsAssignment: false // facet层，通过+连接，不支持赋值
   },
   
   {
@@ -1625,7 +1683,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'facet_grid({{#if rows}}rows = vars({{rows}}){{/if}}{{#if cols}}{{#if rows}}, {{/if}}cols = vars({{cols}}){{/if}}{{#if scales}}, scales = {{scales}}{{/if}})'
+    rTemplate: 'facet_grid({{#if rows}}rows = vars({{rows}}){{/if}}{{#if cols}}{{#if rows}}, {{/if}}cols = vars({{cols}}){{/if}}{{#if scales}}, scales = {{scales}}{{/if}})',
+    supportsAssignment: false // facet层，通过+连接，不支持赋值
   },
   
   // ========== 8. 统计变换 (Stats) ==========
@@ -1650,7 +1709,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'stat_summary({{#if fun}}fun = {{fun}}{{/if}}{{#if geom}}, geom = {{geom}}{{/if}})'
+    rTemplate: 'stat_summary({{#if fun}}fun = {{fun}}{{/if}}{{#if geom}}, geom = {{geom}}{{/if}})',
+    supportsAssignment: false // stat层，通过+连接，不支持赋值
   },
   
   {
@@ -1674,7 +1734,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'stat_smooth({{#if method}}method = {{method}}{{/if}}{{#if formula}}, formula = {{formula}}{{/if}})'
+    rTemplate: 'stat_smooth({{#if method}}method = {{method}}{{/if}}{{#if formula}}, formula = {{formula}}{{/if}})',
+    supportsAssignment: false // stat层，通过+连接，不支持赋值
   },
   
   // ========== 9. 标签 (Labels) ==========
@@ -1729,7 +1790,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'labs({{#if title}}title = {{title}}{{/if}}{{#if subtitle}}, subtitle = {{subtitle}}{{/if}}{{#if x}}, x = {{x}}{{/if}}{{#if y}}, y = {{y}}{{/if}}{{#if fill}}, fill = {{fill}}{{/if}}{{#if color}}, color = {{color}}{{/if}}{{#if caption}}, caption = {{caption}}{{/if}})'
+    rTemplate: 'labs({{#if title}}title = {{title}}{{/if}}{{#if subtitle}}, subtitle = {{subtitle}}{{/if}}{{#if x}}, x = {{x}}{{/if}}{{#if y}}, y = {{y}}{{/if}}{{#if fill}}, fill = {{fill}}{{/if}}{{#if color}}, color = {{color}}{{/if}}{{#if caption}}, caption = {{caption}}{{/if}})',
+    supportsAssignment: false // labs层，通过+连接，不支持赋值
   },
   
   {
@@ -1753,7 +1815,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'ggtitle({{#if label}}{{label}}{{/if}}{{#if subtitle}}, subtitle = {{subtitle}}{{/if}})'
+    rTemplate: 'ggtitle({{#if label}}{{label}}{{/if}}{{#if subtitle}}, subtitle = {{subtitle}}{{/if}})',
+    supportsAssignment: false // 标签层，通过+连接，不支持赋值
   },
   
   {
@@ -1771,7 +1834,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'xlab({{#if label}}{{label}}{{/if}})'
+    rTemplate: 'xlab({{#if label}}{{label}}{{/if}})',
+    supportsAssignment: false // 标签层，通过+连接，不支持赋值
   },
   
   {
@@ -1789,7 +1853,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'ylab({{#if label}}{{label}}{{/if}})'
+    rTemplate: 'ylab({{#if label}}{{label}}{{/if}})',
+    supportsAssignment: false // 标签层，通过+连接，不支持赋值
   },
   
   // ========== 10. 主题 (Themes) ==========
@@ -1803,7 +1868,8 @@ export const blockDefinitions: BlockDefinition[] = [
     params: [
       { name: 'args', type: 'text', label: '参数', required: false }
     ],
-    rTemplate: 'theme_minimal({{#if args}}{{args}}{{/if}})'
+    rTemplate: 'theme_minimal({{#if args}}{{args}}{{/if}})',
+    supportsAssignment: false // 主题层，通过+连接，不支持赋值
   },
   
   {
@@ -1814,7 +1880,8 @@ export const blockDefinitions: BlockDefinition[] = [
     description: '经典主题',
     color: '#10b981',
     params: [],
-    rTemplate: 'theme_classic()'
+    rTemplate: 'theme_classic()',
+    supportsAssignment: false // 主题层，通过+连接，不支持赋值
   },
   
   {
@@ -1825,7 +1892,8 @@ export const blockDefinitions: BlockDefinition[] = [
     description: '黑白主题',
     color: '#10b981',
     params: [],
-    rTemplate: 'theme_bw()'
+    rTemplate: 'theme_bw()',
+    supportsAssignment: false // 主题层，通过+连接，不支持赋值
   },
   
   {
@@ -1836,7 +1904,8 @@ export const blockDefinitions: BlockDefinition[] = [
     description: '灰色主题（默认）',
     color: '#10b981',
     params: [],
-    rTemplate: 'theme_gray()'
+    rTemplate: 'theme_gray()',
+    supportsAssignment: false // 主题层，通过+连接，不支持赋值
   },
   
   {
@@ -1847,7 +1916,8 @@ export const blockDefinitions: BlockDefinition[] = [
     description: '浅色主题',
     color: '#10b981',
     params: [],
-    rTemplate: 'theme_light()'
+    rTemplate: 'theme_light()',
+    supportsAssignment: false // 主题层，通过+连接，不支持赋值
   },
   
   {
@@ -1858,7 +1928,8 @@ export const blockDefinitions: BlockDefinition[] = [
     description: '深色主题',
     color: '#10b981',
     params: [],
-    rTemplate: 'theme_dark()'
+    rTemplate: 'theme_dark()',
+    supportsAssignment: false // 主题层，通过+连接，不支持赋值
   },
   
   {
@@ -1869,7 +1940,8 @@ export const blockDefinitions: BlockDefinition[] = [
     description: '空白主题',
     color: '#10b981',
     params: [],
-    rTemplate: 'theme_void()'
+    rTemplate: 'theme_void()',
+    supportsAssignment: false // 主题层，通过+连接，不支持赋值
   },
   
   {
@@ -1887,7 +1959,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'theme({{#if custom}}{{custom}}{{/if}})'
+    rTemplate: 'theme({{#if custom}}{{custom}}{{/if}})',
+    supportsAssignment: false // 主题层，通过+连接，不支持赋值
   },
   
   // ========== 11. 其他几何对象 ==========
@@ -1942,7 +2015,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'geom_segment({{#if data}}data = {{data}}{{/if}}{{#if mapping}}{{#if data}}, {{/if}}mapping = {{mapping}}{{/if}}{{#if colour}}, colour = {{colour}}{{/if}}{{#if alpha}}, alpha = {{alpha}}{{/if}}{{#if linewidth}}, linewidth = {{linewidth}}{{/if}}{{#if size}}, size = {{size}}{{/if}}{{#if inherit_aes}}, inherit.aes = {{inherit_aes}}{{/if}})'
+    rTemplate: 'geom_segment({{#if data}}data = {{data}}{{/if}}{{#if mapping}}{{#if data}}, {{/if}}mapping = {{mapping}}{{/if}}{{#if colour}}, colour = {{colour}}{{/if}}{{#if alpha}}, alpha = {{alpha}}{{/if}}{{#if linewidth}}, linewidth = {{linewidth}}{{/if}}{{#if size}}, size = {{size}}{{/if}}{{#if inherit_aes}}, inherit.aes = {{inherit_aes}}{{/if}})',
+    supportsAssignment: false // geom层，通过+连接，不支持赋值
   },
   
   // ========== 12. 其他标度 ==========
@@ -1973,7 +2047,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'scale_fill_viridis({{#if name}}name = {{name}}{{/if}}{{#if discrete}}{{#if name}}, {{/if}}discrete = {{discrete}}{{/if}}{{#if option}}{{#if name}}, {{else}}{{#if discrete}}, {{/if}}{{/if}}option = {{option}}{{/if}})'
+    rTemplate: 'scale_fill_viridis({{#if name}}name = {{name}}{{/if}}{{#if discrete}}{{#if name}}, {{/if}}discrete = {{discrete}}{{/if}}{{#if option}}{{#if name}}, {{else}}{{#if discrete}}, {{/if}}{{/if}}option = {{option}}{{/if}})',
+    supportsAssignment: false // scale层，通过+连接，不支持赋值
   },
   
   // ========== 13. 坐标轴限制 ==========
@@ -1998,7 +2073,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'ylim({{#if min}}{{min}}{{/if}}{{#if max}}, {{max}}{{/if}})'
+    rTemplate: 'ylim({{#if min}}{{min}}{{/if}}{{#if max}}, {{max}}{{/if}})',
+    supportsAssignment: false // 坐标轴限制层，通过+连接，不支持赋值
   },
   
   // ========== 14. 注释 ==========
@@ -2065,7 +2141,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'annotate({{#if geom}}{{geom}}{{/if}}{{#if x}}, x = {{x}}{{/if}}{{#if y}}, y = {{y}}{{/if}}{{#if label}}, label = {{label}}{{/if}}{{#if color}}, color = {{color}}{{/if}}{{#if size}}, size = {{size}}{{/if}}{{#if angle}}, angle = {{angle}}{{/if}}{{#if fontface}}, fontface = {{fontface}}{{/if}}{{#if hjust}}, hjust = {{hjust}}{{/if}})'
+    rTemplate: 'annotate({{#if geom}}{{geom}}{{/if}}{{#if x}}, x = {{x}}{{/if}}{{#if y}}, y = {{y}}{{/if}}{{#if label}}, label = {{label}}{{/if}}{{#if color}}, color = {{color}}{{/if}}{{#if size}}, size = {{size}}{{/if}}{{#if angle}}, angle = {{angle}}{{/if}}{{#if fontface}}, fontface = {{fontface}}{{/if}}{{#if hjust}}, hjust = {{hjust}}{{/if}})',
+    supportsAssignment: false // 注释层，通过+连接，不支持赋值
   },
   
   // ========== 15. 保存图表 ==========
@@ -2108,7 +2185,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'ggsave({{#if plot}}plot = {{plot}}{{/if}}{{#if file}}{{#if plot}}, {{/if}}file = {{file}}{{/if}}{{#if width}}, width = {{width}}{{/if}}{{#if height}}, height = {{height}}{{/if}}{{#if dpi}}, dpi = {{dpi}}{{/if}})'
+    rTemplate: 'ggsave({{#if plot}}plot = {{plot}}{{/if}}{{#if file}}{{#if plot}}, {{/if}}file = {{file}}{{/if}}{{#if width}}, width = {{width}}{{/if}}{{#if height}}, height = {{height}}{{/if}}{{#if dpi}}, dpi = {{dpi}}{{/if}})',
+    supportsAssignment: false // 保存函数，不支持赋值
   },
   
   // ========== 16. tidyverse 数据处理 ==========
@@ -2139,7 +2217,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'gather({{#if key}}key = {{key}}{{/if}}{{#if value}}, value = {{value}}{{/if}}{{#if exclude}}, {{exclude}}{{/if}})'
+    rTemplate: 'gather({{#if key}}key = {{key}}{{/if}}{{#if value}}, value = {{value}}{{/if}}{{#if exclude}}, {{exclude}}{{/if}})',
+    supportsAssignment: true // 返回数据框，支持赋值或管道传递
   },
   
   {
@@ -2157,7 +2236,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'arrange({{#if columns}}{{columns}}{{/if}})'
+    rTemplate: 'arrange({{#if columns}}{{columns}}{{/if}})',
+    supportsAssignment: true // 返回数据框，支持赋值或管道传递
   },
   
   {
@@ -2175,7 +2255,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'mutate({{#if expressions}}{{expressions}}{{/if}})'
+    rTemplate: 'mutate({{#if expressions}}{{expressions}}{{/if}})',
+    supportsAssignment: true // 返回数据框，支持赋值或管道传递
   },
   
   {
@@ -2193,7 +2274,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'summarize({{#if expressions}}{{expressions}}{{/if}})'
+    rTemplate: 'summarize({{#if expressions}}{{expressions}}{{/if}})',
+    supportsAssignment: true // 返回数据框，支持赋值或管道传递
   },
   
   {
@@ -2211,7 +2293,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'group_by({{#if columns}}{{columns}}{{/if}})'
+    rTemplate: 'group_by({{#if columns}}{{columns}}{{/if}})',
+    supportsAssignment: true // 返回分组数据框，支持赋值或管道传递
   },
   
   {
@@ -2222,7 +2305,8 @@ export const blockDefinitions: BlockDefinition[] = [
     description: '按行操作',
     color: '#3b82f6',
     params: [],
-    rTemplate: 'rowwise()'
+    rTemplate: 'rowwise()',
+    supportsAssignment: true // 返回数据框，支持赋值或管道传递
   },
   
   // ========== 17. 主题元素 ==========
@@ -2247,7 +2331,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: false
       }
     ],
-    rTemplate: 'unit({{#if values}}{{values}}{{/if}}{{#if units}}, {{units}}{{/if}})'
+    rTemplate: 'unit({{#if values}}{{values}}{{/if}}{{#if units}}, {{units}}{{/if}})',
+    supportsAssignment: true // 返回unit对象，支持赋值
   },
   
   {
@@ -2258,7 +2343,8 @@ export const blockDefinitions: BlockDefinition[] = [
     description: '空白元素',
     color: '#10b981',
     params: [],
-    rTemplate: 'element_blank()'
+    rTemplate: 'element_blank()',
+    supportsAssignment: true // 返回element对象，支持赋值
   },
   
   // ==================== 高级R语法 ====================
@@ -2284,7 +2370,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: '{{left}} %>% {{right}}'
+    rTemplate: '{{left}} %>% {{right}}',
+    supportsAssignment: true // 管道表达式结果支持赋值
   },
   
   {
@@ -2308,7 +2395,8 @@ export const blockDefinitions: BlockDefinition[] = [
         required: true
       }
     ],
-    rTemplate: '{{object}}${{field}}'
+    rTemplate: '{{object}}${{field}}',
+    supportsAssignment: true // 索引访问结果支持赋值
   },
   
   {
@@ -2327,7 +2415,8 @@ export const blockDefinitions: BlockDefinition[] = [
         defaultValue: 'a + b'
       }
     ],
-    rTemplate: '{{expression}}'
+    rTemplate: '{{expression}}',
+    supportsAssignment: true // 算术表达式结果支持赋值
   },
   
   {
@@ -2357,7 +2446,8 @@ export const blockDefinitions: BlockDefinition[] = [
         defaultValue: ''
       }
     ],
-    rTemplate: '{{object}}[{{rows}}{{#if cols}}, {{cols}}{{/if}}]'
+    rTemplate: '{{object}}[{{rows}}{{#if cols}}, {{cols}}{{/if}}]',
+    supportsAssignment: true // 子集访问结果支持赋值
   },
   
   {
@@ -2376,7 +2466,8 @@ export const blockDefinitions: BlockDefinition[] = [
         defaultValue: '1, 2'
       }
     ],
-    rTemplate: '-c({{indices}})'
+    rTemplate: '-c({{indices}})',
+    supportsAssignment: true // 返回向量，支持赋值
   },
   
   {
@@ -2406,7 +2497,8 @@ export const blockDefinitions: BlockDefinition[] = [
         defaultValue: ''
       }
     ],
-    rTemplate: '{{package}}::{{function}}({{args}})'
+    rTemplate: '{{package}}::{{function}}({{args}})',
+    supportsAssignment: true // 函数调用结果支持赋值
   }
 ];
 
