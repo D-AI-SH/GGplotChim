@@ -75,8 +75,36 @@ function renderTemplate(template: string, params: Record<string, any>, childrenC
   
   // 替换简单变量 {{variable}}
   result = result.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-    const value = params[key] !== undefined ? String(params[key]) : '';
-    return value;
+    const value = params[key];
+    if (value === undefined) return '';
+    
+    // 处理按钮组参数（数组）
+    if (Array.isArray(value)) {
+      if (value.length === 0) return '';
+      
+      // 获取积木定义以找到按钮选项
+      const blockDef = blockDefinitions.find(def => {
+        const param = def.params.find(p => p.name === key);
+        return param && param.type === 'buttonGroup';
+      });
+      
+      if (blockDef) {
+        const param = blockDef.params.find(p => p.name === key);
+        if (param && param.buttonOptions) {
+          // 根据选中的按钮ID生成代码
+          const selectedOptions = value.map(buttonId => {
+            const option = param.buttonOptions!.find(opt => opt.id === buttonId);
+            return option ? option.value : '';
+          }).filter(Boolean);
+          
+          return selectedOptions.join(', ');
+        }
+      }
+      
+      return value.join(', ');
+    }
+    
+    return String(value);
   });
   
   return result;

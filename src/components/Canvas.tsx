@@ -155,6 +155,31 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
     // 打开编辑器
     setEditingBlockId(blockId);
   }, [setEditingBlockId]);
+
+  // 处理按钮组切换
+  const handleButtonToggle = useCallback((blockId: string, paramName: string, buttonId: string) => {
+    const block = blocks.find(b => b.id === blockId);
+    if (!block) return;
+
+    const currentValue = block.params[paramName] || [];
+    const isSelected = Array.isArray(currentValue) && currentValue.includes(buttonId);
+    
+    let newValue;
+    if (isSelected) {
+      // 取消选择
+      newValue = currentValue.filter((id: string) => id !== buttonId);
+    } else {
+      // 添加选择
+      newValue = [...currentValue, buttonId];
+    }
+
+    updateBlock(blockId, {
+      params: {
+        ...block.params,
+        [paramName]: newValue
+      }
+    });
+  }, [blocks, updateBlock]);
   
   // 处理拖放到容器插槽
   const handleDropToSlot = useCallback((containerBlockId: string, slotName: string, draggedBlockId: string, insertIndex?: number) => {
@@ -1615,6 +1640,7 @@ const Canvas = forwardRef<any, CanvasProps>((props, ref) => {
                     isSelected={selectedBlockIds.includes(block.id)}
                     dropTarget={dropTarget}
                     onDoubleClick={handleBlockDoubleClick}
+                    onButtonToggle={handleButtonToggle}
                   />
                 </div>
               ) : null;

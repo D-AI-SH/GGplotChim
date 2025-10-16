@@ -135,11 +135,19 @@ export enum BlockType {
 
 export interface BlockParam {
   name: string;
-  type: 'text' | 'number' | 'select' | 'color' | 'boolean' | 'column';
+  type: 'text' | 'number' | 'select' | 'color' | 'boolean' | 'column' | 'buttonGroup';
   label: string;
   defaultValue?: any;
   options?: Array<{ label: string; value: string | number }>;
   required?: boolean;
+  // 按钮组特有属性
+  buttonOptions?: Array<{
+    id: string;
+    label: string;
+    value: string;
+    conflicts?: string[]; // 冲突的按钮ID列表
+  }>;
+  rows?: number; // 按钮排列行数
 }
 
 // 容器型积木的插槽定义

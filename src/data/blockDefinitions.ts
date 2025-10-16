@@ -923,13 +923,24 @@ export const blockDefinitions: BlockDefinition[] = [
       },
       {
         name: 'mapping',
-        type: 'text',
-        label: 'mapping (可选)',
-        required: false
+        type: 'buttonGroup',
+        label: '美学映射',
+        required: false,
+        rows: 2,
+        buttonOptions: [
+          { id: 'x', label: 'x', value: 'x = ', conflicts: [] },
+          { id: 'y', label: 'y', value: 'y = ', conflicts: [] },
+          { id: 'color', label: 'color', value: 'color = ', conflicts: [] },
+          { id: 'fill', label: 'fill', value: 'fill = ', conflicts: [] },
+          { id: 'size', label: 'size', value: 'size = ', conflicts: [] },
+          { id: 'alpha', label: 'alpha', value: 'alpha = ', conflicts: [] },
+          { id: 'shape', label: 'shape', value: 'shape = ', conflicts: [] },
+          { id: 'linetype', label: 'linetype', value: 'linetype = ', conflicts: [] }
+        ]
       }
     ],
-    rTemplate: 'ggplot({{data}}{{#if mapping}}, {{mapping}}{{/if}})',
-    supportsAssignment: true // 返回ggplot对象，支持赋值
+    rTemplate: 'p <- ggplot({{data}}{{#if mapping}}, {{mapping}}{{/if}})',
+    supportsAssignment: false // 已经包含赋值语句
   },
   
   // ========== 3. aes() 美学映射 ==========
@@ -1954,9 +1965,29 @@ export const blockDefinitions: BlockDefinition[] = [
     params: [
       {
         name: 'custom',
-        type: 'text',
-        label: '自定义参数',
-        required: false
+        type: 'buttonGroup',
+        label: '主题设置',
+        required: false,
+        rows: 3,
+        buttonOptions: [
+          { id: 'plot_title', label: '标题', value: 'plot.title = element_text()', conflicts: [] },
+          { id: 'plot_subtitle', label: '副标题', value: 'plot.subtitle = element_text()', conflicts: [] },
+          { id: 'plot_caption', label: '说明', value: 'plot.caption = element_text()', conflicts: [] },
+          { id: 'axis_title_x', label: 'X轴标题', value: 'axis.title.x = element_text()', conflicts: [] },
+          { id: 'axis_title_y', label: 'Y轴标题', value: 'axis.title.y = element_text()', conflicts: [] },
+          { id: 'axis_text_x', label: 'X轴文字', value: 'axis.text.x = element_text()', conflicts: [] },
+          { id: 'axis_text_y', label: 'Y轴文字', value: 'axis.text.y = element_text()', conflicts: [] },
+          { id: 'axis_ticks', label: '刻度线', value: 'axis.ticks = element_line()', conflicts: [] },
+          { id: 'axis_line', label: '轴线', value: 'axis.line = element_line()', conflicts: [] },
+          { id: 'legend_title', label: '图例标题', value: 'legend.title = element_text()', conflicts: [] },
+          { id: 'legend_text', label: '图例文字', value: 'legend.text = element_text()', conflicts: [] },
+          { id: 'legend_position', label: '图例位置', value: 'legend.position = "right"', conflicts: [] },
+          { id: 'panel_background', label: '面板背景', value: 'panel.background = element_rect()', conflicts: [] },
+          { id: 'panel_grid_major', label: '主网格线', value: 'panel.grid.major = element_line()', conflicts: [] },
+          { id: 'panel_grid_minor', label: '次网格线', value: 'panel.grid.minor = element_line()', conflicts: [] },
+          { id: 'strip_background', label: '分面背景', value: 'strip.background = element_rect()', conflicts: [] },
+          { id: 'strip_text', label: '分面文字', value: 'strip.text = element_text()', conflicts: [] }
+        ]
       }
     ],
     rTemplate: 'theme({{#if custom}}{{custom}}{{/if}})',

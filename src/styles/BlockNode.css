@@ -92,6 +92,64 @@
   font-weight: var(--font-semibold);
 }
 
+/* ========== 按钮组样式 ========== */
+.button-group-param {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+}
+
+.button-group {
+  display: grid;
+  gap: var(--spacing-xs);
+  width: 100%;
+}
+
+.param-button {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--bg-white);
+  border: var(--border-width-thin) solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  font-weight: var(--font-medium);
+  color: var(--color-gray-700);
+  cursor: pointer;
+  transition: var(--transition-all);
+  text-align: center;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.param-button:hover:not(.disabled) {
+  background: var(--color-primary-bg);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.param-button.selected {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--bg-white);
+  box-shadow: var(--shadow-md);
+}
+
+.param-button.disabled {
+  background: var(--color-gray-100);
+  border-color: var(--color-gray-200);
+  color: var(--color-gray-400);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.param-button.disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 /* ========== 连接点 ========== */
 .connection-point {
   position: absolute;

@@ -196,6 +196,24 @@ function normalizeParams(blockType: BlockType, parsedParams: Record<string, any>
         normalized[firstParam.name] = parsedParams._positional;
       }
     }
+    
+    // 处理按钮组参数 - 从代码中解析出选中的按钮
+    blockDef.params.forEach(param => {
+      if (param.type === 'buttonGroup' && param.buttonOptions) {
+        const selectedButtons: string[] = [];
+        
+        // 检查代码中是否包含按钮选项的值
+        param.buttonOptions.forEach(option => {
+          if (parsedParams._positional && parsedParams._positional.includes(option.value)) {
+            selectedButtons.push(option.id);
+          }
+        });
+        
+        if (selectedButtons.length > 0) {
+          normalized[param.name] = selectedButtons;
+        }
+      }
+    });
   }
   
   return normalized;

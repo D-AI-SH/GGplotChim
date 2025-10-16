@@ -17,6 +17,7 @@ interface BlockNodeProps {
   isSelected?: boolean;
   dropTarget?: { containerId: string; slotName: string; insertIndex: number } | null;
   onDoubleClick?: (blockId: string) => void;
+  onButtonToggle?: (blockId: string, paramName: string, buttonId: string) => void;
 }
 
 const BlockNode: React.FC<BlockNodeProps> = ({ 
@@ -31,7 +32,8 @@ const BlockNode: React.FC<BlockNodeProps> = ({
   isDragging = false,
   isSelected = false,
   dropTarget = null,
-  onDoubleClick
+  onDoubleClick,
+  onButtonToggle
 }) => {
   const { blocks } = useBlockStore();
   
@@ -108,6 +110,44 @@ const BlockNode: React.FC<BlockNodeProps> = ({
         {Object.entries(block.params).map(([key, value]) => {
           const param = definition.params.find(p => p.name === key);
           if (!param || value === undefined || value === '') return null;
+          
+          // 处理按钮组参数
+          if (param.type === 'buttonGroup') {
+            const selectedButtons = Array.isArray(value) ? value : [];
+            const buttonOptions = param.buttonOptions || [];
+            const rows = param.rows || 1;
+            
+            return (
+              <div key={key} className="param-display button-group-param">
+                <span className="param-label">{param.label}:</span>
+                <div className="button-group" style={{ gridTemplateColumns: `repeat(${Math.ceil(buttonOptions.length / rows)}, 1fr)` }}>
+                  {buttonOptions.map((option) => {
+                    const isSelected = selectedButtons.includes(option.id);
+                    const isDisabled = selectedButtons.some(selectedId => {
+                      const selectedOption = buttonOptions.find(opt => opt.id === selectedId);
+                      return selectedOption?.conflicts?.includes(option.id);
+                    });
+                    
+                    return (
+                      <button
+                        key={option.id}
+                        className={`param-button ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onButtonToggle) {
+                            onButtonToggle(block.id, key, option.id);
+                          }
+                        }}
+                        disabled={isDisabled}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          }
           
           return (
             <div key={key} className="param-display">
