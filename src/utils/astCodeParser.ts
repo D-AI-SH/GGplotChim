@@ -1424,29 +1424,29 @@ export async function parseRCodeToBlocksWithAST(
             
             console.log(`  📦 [AST解析器] 循环体包含 ${bodyBlocks.length} 个积木`);
             
-            // 将循环体内的积木添加到容器内
+            // 🔧 关键修复：为循环体内的所有积木设置父ID和位置
             for (const bodyBlock of bodyBlocks) {
-              // 🔍 只将直接子积木添加到 children.body（不包括孙积木）
+              // 只有当积木还没有父节点时才设置（处理嵌套循环的情况）
               if (!bodyBlock.parentId) {
                 bodyBlock.parentId = forBlock.id;
                 bodyBlock.slotName = 'body';
                 forBlock.children!.body.push(bodyBlock.id);
               }
               
-              // 📌 所有积木（包括孙积木）都要添加到 blocks 数组中
-              
-              // 位置设置为相对于父积木的偏移（在渲染时会被调整）
+              // 设置相对于父积木的初始位置
               bodyBlock.position.x = LEFT_COLUMN_X + 30; // 缩进
               bodyBlock.position.y = leftColumnY;
               
+              // 将循环体内的积木（包括孙积木）也添加到主列表中
               blocks.push(bodyBlock);
               
+              // 更新Y坐标，为下一个积木布局
               const bodyBlockHeight = estimateBlockHeight(bodyBlock);
               leftColumnY += bodyBlockHeight + VERTICAL_SPACING;
-              console.log(`  📏 循环体积木 ${bodyBlock.id} (${bodyBlock.blockType}) 位置: (${bodyBlock.position.x}, ${bodyBlock.position.y}), 高度: ${bodyBlockHeight}px, 父积木: ${bodyBlock.parentId || '无'}`);
+              console.log(`    📏 循环体积木 ${bodyBlock.id} (${bodyBlock.blockType})，父积木: ${bodyBlock.parentId}`);
             }
             
-            console.log(`✅ [AST解析器] for 循环 ${forBlock.id} 包含 ${forBlock.children!.body.length} 个直接子积木（共 ${bodyBlocks.length} 个积木含孙积木）:`, forBlock.children!.body);
+            console.log(`✅ [AST解析器] for 循环 ${forBlock.id} 包含 ${forBlock.children!.body.length} 个直接子积木。`);
           }
         }
       }
